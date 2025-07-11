@@ -2,8 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   Camera,
@@ -40,8 +38,17 @@ interface StudentData {
 }
 
 const StudentIDCard = () => {
-  const { profile } = useAuth();
   const { toast } = useToast();
+
+  // Mock student profile data
+  const mockProfile = {
+    id: "student-123",
+    full_name: "John Doe",
+    email: "john.doe@student.school.com",
+    phone: "+1 (555) 123-4567",
+    address: "123 Main Street, Anytown, State 12345",
+    avatar_url: null,
+  };
   const cardRef = useRef<HTMLDivElement>(null);
   const [studentData, setStudentData] = useState<StudentData>({
     rollNumber: "",
@@ -62,73 +69,40 @@ const StudentIDCard = () => {
   const [showBack, setShowBack] = useState(false);
 
   useEffect(() => {
-    if (profile) {
-      loadStudentData();
-      generateQRCode();
-    }
-  }, [profile]);
+    loadMockStudentData();
+    generateQRCode();
+  }, []);
 
-  const loadStudentData = async () => {
+  const loadMockStudentData = async () => {
     try {
       setLoading(true);
 
-      // Get student enrollment data
-      const { data: enrollment, error: enrollmentError } = await supabase
-        .from("student_enrollments")
-        .select(
-          `
-          roll_number,
-          classes(
-            name,
-            section,
-            academic_year
-          )
-        `,
-        )
-        .eq("student_id", profile?.id)
-        .single();
-
-      if (enrollmentError) throw enrollmentError;
-
-      // Get or create QR code
-      const { data: qrData, error: qrError } = await supabase
-        .from("student_qr_codes")
-        .select("qr_code_data, expires_at")
-        .eq("student_id", profile?.id)
-        .single();
-
-      // Get parent information if available
-      const { data: parentData } = await supabase
-        .from("parent_child_relationships")
-        .select(
-          `
-          profiles!parent_id(
-            full_name,
-            phone
-          )
-        `,
-        )
-        .eq("child_id", profile?.id)
-        .eq("primary_contact", true)
-        .single();
+      // Simulate loading delay
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       const currentYear = new Date().getFullYear();
       const nextYear = currentYear + 1;
 
       setStudentData({
-        rollNumber: enrollment?.roll_number || "Not Assigned",
-        className: enrollment?.classes?.name || "Not Assigned",
-        section: enrollment?.classes?.section || "",
-        academicYear:
-          enrollment?.classes?.academic_year || `${currentYear}-${nextYear}`,
-        bloodGroup: "A+", // This would ideally come from a medical info table
-        emergencyContact: profile?.phone || "",
-        address: profile?.address || "",
-        qrCodeData: qrData?.qr_code_data || "",
-        validUntil: qrData?.expires_at || `${nextYear}-06-30`,
+        rollNumber: "2024-STU-001",
+        className: "Grade 10",
+        section: "A",
+        academicYear: `${currentYear}-${nextYear}`,
+        bloodGroup: "O+",
+        emergencyContact: mockProfile.phone,
+        address: mockProfile.address,
+        qrCodeData: JSON.stringify({
+          studentId: mockProfile.id,
+          name: mockProfile.full_name,
+          rollNumber: "2024-STU-001",
+          class: "Grade 10 A",
+          validUntil: `${nextYear}-06-30`,
+          issued: new Date().toISOString(),
+        }),
+        validUntil: `${nextYear}-06-30`,
         schoolName: "ScholarMate Academy",
-        parentName: parentData?.profiles?.full_name || "Not Available",
-        parentPhone: parentData?.profiles?.phone || "Not Available",
+        parentName: "Jane Doe",
+        parentPhone: "+1 (555) 987-6543",
       });
     } catch (error) {
       console.error("Error loading student data:", error);
@@ -146,8 +120,8 @@ const StudentIDCard = () => {
     try {
       // Create QR code data with student information
       const qrData = {
-        studentId: profile?.id,
-        name: profile?.full_name,
+        studentId: mockProfile.id,
+        name: mockProfile.full_name,
         rollNumber: studentData.rollNumber,
         class: `${studentData.className} ${studentData.section}`,
         validUntil: studentData.validUntil,
@@ -160,14 +134,6 @@ const StudentIDCard = () => {
       // For now, we'll use a placeholder URL
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrString)}`;
       setQrCodeUrl(qrUrl);
-
-      // Store/update QR code in database
-      await supabase.from("student_qr_codes").upsert({
-        student_id: profile?.id,
-        qr_code_data: qrString,
-        expires_at:
-          studentData.validUntil || `${new Date().getFullYear() + 1}-06-30`,
-      });
     } catch (error) {
       console.error("Error generating QR code:", error);
     }
@@ -291,14 +257,14 @@ const StudentIDCard = () => {
               <CardContent className="space-y-3">
                 <div className="flex items-center space-x-3">
                   <Avatar className="h-16 w-16 border-3 border-white/30">
-                    <AvatarImage src={profile?.avatar_url || ""} />
+                    <AvatarImage src={mockProfile.avatar_url || ""} />
                     <AvatarFallback className="bg-white/20 text-white text-lg">
                       <User className="h-8 w-8" />
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <h3 className="text-lg font-bold leading-tight">
-                      {profile?.full_name}
+                      {mockProfile.full_name}
                     </h3>
                     <p className="text-sm opacity-90">
                       Roll No: {studentData.rollNumber}
