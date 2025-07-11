@@ -44,18 +44,31 @@ All colors MUST be HSL.
 
     /* Design system tokens */
     --radius: 0.75rem;
-    
+
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 48%), hsl(252 76% 58%));
-    --gradient-secondary: linear-gradient(135deg, hsl(142 71% 45%), hsl(168 76% 42%));
-    --gradient-hero: linear-gradient(135deg, hsl(217 91% 48%) 0%, hsl(252 76% 58%) 50%, hsl(282 87% 64%) 100%);
-    
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(217 91% 48%),
+      hsl(252 76% 58%)
+    );
+    --gradient-secondary: linear-gradient(
+      135deg,
+      hsl(142 71% 45%),
+      hsl(168 76% 42%)
+    );
+    --gradient-hero: linear-gradient(
+      135deg,
+      hsl(217 91% 48%) 0%,
+      hsl(252 76% 58%) 50%,
+      hsl(282 87% 64%) 100%
+    );
+
     /* Shadows */
     --shadow-soft: 0 2px 8px -2px hsl(220 25% 12% / 0.08);
     --shadow-medium: 0 4px 16px -4px hsl(220 25% 12% / 0.12);
     --shadow-large: 0 8px 32px -8px hsl(220 25% 12% / 0.16);
     --shadow-glow: 0 0 32px hsl(217 91% 48% / 0.3);
-    
+
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -108,10 +121,23 @@ All colors MUST be HSL.
     --ring: 217 91% 60%;
 
     /* Dark theme gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(252 76% 70%));
-    --gradient-secondary: linear-gradient(135deg, hsl(142 71% 55%), hsl(168 76% 52%));
-    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(252 76% 70%) 50%, hsl(282 87% 74%) 100%);
-    
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(217 91% 60%),
+      hsl(252 76% 70%)
+    );
+    --gradient-secondary: linear-gradient(
+      135deg,
+      hsl(142 71% 55%),
+      hsl(168 76% 52%)
+    );
+    --gradient-hero: linear-gradient(
+      135deg,
+      hsl(217 91% 60%) 0%,
+      hsl(252 76% 70%) 50%,
+      hsl(282 87% 74%) 100%
+    );
+
     /* Dark theme shadows */
     --shadow-soft: 0 2px 8px -2px hsl(222 84% 5% / 0.3);
     --shadow-medium: 0 4px 16px -4px hsl(222 84% 5% / 0.4);
@@ -127,5 +153,49 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Mobile-optimized touch interactions */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Smooth scrolling on all devices */
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Better mobile input styling */
+  input,
+  textarea,
+  select {
+    @apply text-base; /* Prevents zoom on iOS */
+  }
+
+  /* Hide scrollbars while maintaining functionality */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Mobile-first responsive utilities */
+@layer utilities {
+  .safe-area-inset {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
