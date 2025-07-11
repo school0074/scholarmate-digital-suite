@@ -155,7 +155,7 @@ const StudentDashboard = () => {
       .from("student_enrollments")
       .select("class_id")
       .eq("student_id", profile?.id)
-      .single();
+      .maybeSingle();
 
     if (!enrollment) return { pending: 0 };
 
@@ -182,7 +182,7 @@ const StudentDashboard = () => {
       .from("student_enrollments")
       .select("class_id")
       .eq("student_id", profile?.id)
-      .single();
+      .maybeSingle();
 
     if (!enrollment) return { upcoming: 0 };
 
@@ -251,7 +251,7 @@ const StudentDashboard = () => {
       .from("daily_quotes")
       .select("quote_text, author")
       .eq("date_featured", today)
-      .single();
+      .maybeSingle();
 
     return data
       ? `"${data.quote_text}" - ${data.author}`

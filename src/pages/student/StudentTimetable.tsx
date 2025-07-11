@@ -104,7 +104,7 @@ const StudentTimetable = () => {
         .from("student_enrollments")
         .select("class_id")
         .eq("student_id", profile?.id)
-        .single();
+        .maybeSingle();
 
       if (enrollmentError || !enrollment) {
         throw new Error("Student enrollment not found");

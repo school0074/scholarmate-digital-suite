@@ -74,7 +74,7 @@ const StudentExams = () => {
         .from("student_enrollments")
         .select("class_id")
         .eq("student_id", profile?.id)
-        .single();
+        .maybeSingle();
 
       if (!enrollment) return;
 
