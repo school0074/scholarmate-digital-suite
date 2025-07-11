@@ -24,6 +24,8 @@ import TeacherHomework from "./pages/teacher/TeacherHomework";
 import TeacherAttendance from "./pages/teacher/TeacherAttendance";
 import TeacherMaterials from "./pages/teacher/TeacherMaterials";
 import TeacherAnnouncements from "./pages/teacher/TeacherAnnouncements";
+import TeacherGrading from "./pages/teacher/TeacherGrading";
+import TeacherMessages from "./pages/teacher/TeacherMessages";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminInviteTeacher from "./pages/admin/AdminInviteTeacher";
 import DebugPage from "./pages/DebugPage";
@@ -126,6 +128,8 @@ const App = () => (
                           path="announcements"
                           element={<TeacherAnnouncements />}
                         />
+                        <Route path="grading" element={<TeacherGrading />} />
+                        <Route path="messages" element={<TeacherMessages />} />
                         <Route
                           path="*"
                           element={
