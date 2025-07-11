@@ -100,8 +100,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-auto">{children}</main>
+          <main className="flex-1 overflow-auto pb-20 lg:pb-0">{children}</main>
         </div>
+
+        {/* Bottom Navigation for Mobile */}
+        <BottomNav />
       </div>
     </SidebarProvider>
   );
