@@ -11,6 +11,7 @@ const Index = () => {
       <HeroSection />
       <FeaturesSection />
       <Footer />
+      <ResponsiveTest />
     </div>
   );
 };
