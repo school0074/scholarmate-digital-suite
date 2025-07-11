@@ -58,15 +58,15 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="flex items-center space-x-2 h-auto"
+                      className="flex items-center space-x-2 h-auto p-1 sm:p-2"
                     >
-                      <Avatar className="h-8 w-8">
+                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                         <AvatarImage src={profile?.avatar_url || ""} />
-                        <AvatarFallback className="bg-primary text-primary-foreground">
+                        <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                           {profile?.full_name?.charAt(0) || "U"}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="text-left hidden sm:block">
+                      <div className="text-left hidden md:block">
                         <p className="text-sm font-medium">
                           {profile?.full_name || "User"}
                         </p>
