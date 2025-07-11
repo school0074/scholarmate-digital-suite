@@ -17,6 +17,7 @@ import StudentAttendance from "./pages/student/StudentAttendance";
 import StudentTimetable from "./pages/student/StudentTimetable";
 import StudentExams from "./pages/student/StudentExams";
 import StudentGrades from "./pages/student/StudentGrades";
+import StudentChat from "./pages/student/StudentChat";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import TeacherHomework from "./pages/teacher/TeacherHomework";
 import TeacherAttendance from "./pages/teacher/TeacherAttendance";
@@ -75,6 +76,8 @@ const App = () => (
                         />
                         <Route path="exams" element={<StudentExams />} />
                         <Route path="grades" element={<StudentGrades />} />
+                        <Route path="doubts" element={<StudentChat />} />
+                        <Route path="chat" element={<StudentChat />} />
                         <Route
                           path="*"
                           element={
