@@ -13,8 +13,6 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   Plus,
@@ -59,8 +57,13 @@ interface Homework {
 }
 
 const TeacherHomework = () => {
-  const { profile } = useAuth();
   const { toast } = useToast();
+
+  // Mock teacher profile data
+  const mockProfile = {
+    id: "teacher-123",
+    full_name: "Prof. Sarah Johnson",
+  };
   const [classes, setClasses] = useState<Class[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [homework, setHomework] = useState<Homework[]>([]);
@@ -77,67 +80,62 @@ const TeacherHomework = () => {
   });
 
   useEffect(() => {
-    if (profile) {
-      loadTeacherData();
-    }
-  }, [profile]);
+    loadMockTeacherData();
+  }, []);
 
-  const loadTeacherData = async () => {
+  const loadMockTeacherData = async () => {
     try {
       setLoading(true);
 
-      // Load teacher's assigned classes and subjects
-      const { data: assignments, error: assignmentError } = await supabase
-        .from("teacher_assignments")
-        .select(
-          `
-          classes (
-            id,
-            name,
-            section,
-            student_enrollments (count)
-          ),
-          subjects (
-            id,
-            name,
-            code
-          )
-        `,
-        )
-        .eq("teacher_id", profile?.id);
+      // Simulate loading delay
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
-      if (assignmentError) throw assignmentError;
+      // Mock classes data
+      const mockClasses: Class[] = [
+        {
+          id: "1",
+          name: "Grade 10",
+          section: "A",
+          studentCount: 32,
+        },
+        {
+          id: "2",
+          name: "Grade 10",
+          section: "B",
+          studentCount: 28,
+        },
+        {
+          id: "3",
+          name: "Grade 9",
+          section: "A",
+          studentCount: 30,
+        },
+      ];
 
-      // Process classes and subjects
-      const classMap = new Map();
-      const subjectMap = new Map();
+      // Mock subjects data
+      const mockSubjects: Subject[] = [
+        {
+          id: "1",
+          name: "Mathematics",
+          code: "MATH101",
+        },
+        {
+          id: "2",
+          name: "Physics",
+          code: "PHY101",
+        },
+        {
+          id: "3",
+          name: "Science",
+          code: "SCI101",
+        },
+      ];
 
-      assignments?.forEach((assignment) => {
-        if (assignment.classes) {
-          const studentCount =
-            assignment.classes.student_enrollments?.[0]?.count || 0;
-          classMap.set(assignment.classes.id, {
-            id: assignment.classes.id,
-            name: assignment.classes.name,
-            section: assignment.classes.section,
-            studentCount,
-          });
-        }
+      setClasses(mockClasses);
+      setSubjects(mockSubjects);
 
-        if (assignment.subjects) {
-          subjectMap.set(assignment.subjects.id, {
-            id: assignment.subjects.id,
-            name: assignment.subjects.name,
-            code: assignment.subjects.code,
-          });
-        }
-      });
-
-      setClasses(Array.from(classMap.values()));
-      setSubjects(Array.from(subjectMap.values()));
-
-      // Load homework created by this teacher
-      await loadHomework();
+      // Load mock homework data
+      loadMockHomework();
     } catch (error) {
       console.error("Error loading teacher data:", error);
       toast({
@@ -150,45 +148,74 @@ const TeacherHomework = () => {
     }
   };
 
-  const loadHomework = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("homework")
-        .select(
-          `
-          id,
-          title,
-          description,
-          due_date,
-          created_at,
-          subjects (name),
-          classes (name, section),
-          student_submissions (count)
-        `,
-        )
-        .eq("assigned_by", profile?.id)
-        .order("created_at", { ascending: false });
+  const loadMockHomework = () => {
+    const mockHomework: Homework[] = [
+      {
+        id: "1",
+        title: "Quadratic Equations Practice",
+        description:
+          "Complete exercises 1-15 from Chapter 4. Show all working steps.",
+        due_date: "2024-12-20",
+        subject_name: "Mathematics",
+        class_name: "Grade 10",
+        class_section: "A",
+        submissionCount: 18,
+        totalStudents: 32,
+        created_at: "2024-12-10T09:00:00Z",
+      },
+      {
+        id: "2",
+        title: "Newton's Laws Lab Report",
+        description:
+          "Write a detailed lab report on the Newton's laws experiment conducted in class.",
+        due_date: "2024-12-22",
+        subject_name: "Physics",
+        class_name: "Grade 10",
+        class_section: "A",
+        submissionCount: 12,
+        totalStudents: 32,
+        created_at: "2024-12-08T14:30:00Z",
+      },
+      {
+        id: "3",
+        title: "Algebra Word Problems",
+        description: "Solve word problems from worksheet distributed in class.",
+        due_date: "2024-12-25",
+        subject_name: "Mathematics",
+        class_name: "Grade 10",
+        class_section: "B",
+        submissionCount: 5,
+        totalStudents: 28,
+        created_at: "2024-12-09T11:15:00Z",
+      },
+      {
+        id: "4",
+        title: "Science Project Research",
+        description:
+          "Research and prepare a presentation on renewable energy sources.",
+        due_date: "2024-12-18",
+        subject_name: "Science",
+        class_name: "Grade 9",
+        class_section: "A",
+        submissionCount: 25,
+        totalStudents: 30,
+        created_at: "2024-12-01T10:00:00Z",
+      },
+      {
+        id: "5",
+        title: "Motion and Forces Exercise",
+        description: "Complete the numerical problems on motion and forces.",
+        due_date: "2024-12-15",
+        subject_name: "Physics",
+        class_name: "Grade 10",
+        class_section: "A",
+        submissionCount: 32,
+        totalStudents: 32,
+        created_at: "2024-11-28T13:45:00Z",
+      },
+    ];
 
-      if (error) throw error;
-
-      const homeworkData =
-        data?.map((hw) => ({
-          id: hw.id,
-          title: hw.title,
-          description: hw.description || "",
-          due_date: hw.due_date || "",
-          subject_name: hw.subjects?.name || "",
-          class_name: hw.classes?.name || "",
-          class_section: hw.classes?.section || "",
-          submissionCount: hw.student_submissions?.[0]?.count || 0,
-          totalStudents: 0, // This would need to be calculated based on class enrollment
-          created_at: hw.created_at,
-        })) || [];
-
-      setHomework(homeworkData);
-    } catch (error) {
-      console.error("Error loading homework:", error);
-    }
+    setHomework(mockHomework);
   };
 
   const handleCreateHomework = async (e: React.FormEvent) => {
@@ -206,16 +233,26 @@ const TeacherHomework = () => {
     try {
       setCreating(true);
 
-      const { error } = await supabase.from("homework").insert({
+      // Simulate API call delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const selectedClass = classes.find((c) => c.id === formData.classId);
+      const selectedSubject = subjects.find((s) => s.id === formData.subjectId);
+
+      const newHomework: Homework = {
+        id: `hw-${Date.now()}`,
         title: formData.title,
         description: formData.description,
-        class_id: formData.classId,
-        subject_id: formData.subjectId,
-        assigned_by: profile?.id,
-        due_date: formData.dueDate || null,
-      });
+        due_date: formData.dueDate,
+        subject_name: selectedSubject?.name || "",
+        class_name: selectedClass?.name || "",
+        class_section: selectedClass?.section || "",
+        submissionCount: 0,
+        totalStudents: selectedClass?.studentCount || 0,
+        created_at: new Date().toISOString(),
+      };
 
-      if (error) throw error;
+      setHomework((prev) => [newHomework, ...prev]);
 
       toast({
         title: "Success",
@@ -230,9 +267,6 @@ const TeacherHomework = () => {
         subjectId: "",
         dueDate: "",
       });
-
-      // Reload homework list
-      await loadHomework();
     } catch (error) {
       console.error("Error creating homework:", error);
       toast({
@@ -251,19 +285,15 @@ const TeacherHomework = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from("homework")
-        .delete()
-        .eq("id", homeworkId);
+      // Simulate API call delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-      if (error) throw error;
+      setHomework((prev) => prev.filter((hw) => hw.id !== homeworkId));
 
       toast({
         title: "Success",
         description: "Homework assignment deleted successfully",
       });
-
-      await loadHomework();
     } catch (error) {
       console.error("Error deleting homework:", error);
       toast({
