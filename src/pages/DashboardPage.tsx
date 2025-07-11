@@ -1,8 +1,7 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import StudentDashboard from './dashboards/StudentDashboard';
-import TeacherDashboard from './dashboards/TeacherDashboard';
-import AdminDashboard from './dashboards/AdminDashboard';
+import { useAuth } from "@/contexts/AuthContext";
+import { Navigate } from "react-router-dom";
+import TeacherDashboard from "./dashboards/TeacherDashboard";
+import AdminDashboard from "./dashboards/AdminDashboard";
 
 const DashboardPage = () => {
   const { profile, loading } = useAuth();
@@ -23,11 +22,11 @@ const DashboardPage = () => {
   }
 
   switch (profile.role) {
-    case 'student':
-      return <StudentDashboard />;
-    case 'teacher':
+    case "student":
+      return <Navigate to="/student/dashboard" replace />;
+    case "teacher":
       return <TeacherDashboard />;
-    case 'admin':
+    case "admin":
       return <AdminDashboard />;
     default:
       return <Navigate to="/auth" replace />;
