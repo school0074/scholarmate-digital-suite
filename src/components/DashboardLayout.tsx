@@ -29,12 +29,12 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           <header className="h-14 sm:h-16 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
             <div className="flex items-center justify-between h-full px-4 sm:px-6">
               {/* Search */}
-              <div className="flex items-center space-x-4 flex-1 max-w-md">
+              <div className="flex items-center space-x-4 flex-1 max-w-sm sm:max-w-md">
                 <div className="relative w-full">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search..."
-                    className="pl-10 bg-background/50 border-border"
+                    className="pl-10 bg-background/50 border-border text-sm"
                   />
                 </div>
               </div>
