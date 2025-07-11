@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, profile } = useAuth();
 
   return (
     <nav className="bg-card/80 backdrop-blur-lg border-b border-border/50 sticky top-0 z-50">
@@ -38,8 +41,25 @@ const Navbar = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost">Sign In</Button>
-            <Button variant="hero" size="lg">Get Started</Button>
+            {user ? (
+              <>
+                <span className="text-sm text-muted-foreground">
+                  Welcome, {profile?.full_name || 'User'}
+                </span>
+                <Link to="/dashboard">
+                  <Button variant="hero" size="lg">Dashboard</Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/auth">
+                  <Button variant="ghost">Sign In</Button>
+                </Link>
+                <Link to="/auth">
+                  <Button variant="hero" size="lg">Get Started</Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -71,8 +91,20 @@ const Navbar = () => {
                 Contact
               </a>
               <div className="flex flex-col space-y-2 px-4 pt-4 border-t border-border/50">
-                <Button variant="ghost" className="justify-start">Sign In</Button>
-                <Button variant="hero">Get Started</Button>
+                {user ? (
+                  <Link to="/dashboard">
+                    <Button variant="hero" className="w-full">Dashboard</Button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link to="/auth">
+                      <Button variant="ghost" className="justify-start">Sign In</Button>
+                    </Link>
+                    <Link to="/auth">
+                      <Button variant="hero">Get Started</Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
