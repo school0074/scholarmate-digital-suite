@@ -114,11 +114,21 @@ const AdminClasses = () => {
 
       if (error) throw error;
 
-      // Mock current_students count for display
-      const classesWithStudentCount = (data || []).map((cls) => ({
-        ...cls,
-        current_students: Math.floor(Math.random() * cls.capacity * 0.9) + 1,
-      }));
+      // Calculate real student enrollment counts for each class
+      const classesWithStudentCount = await Promise.all(
+        (data || []).map(async (cls) => {
+          const { data: enrollments } = await supabase
+            .from("student_enrollments")
+            .select("id")
+            .eq("class_id", cls.id)
+            .eq("status", "active");
+
+          return {
+            ...cls,
+            current_students: enrollments?.length || 0,
+          };
+        }),
+      );
 
       setClasses(classesWithStudentCount);
     } catch (error) {
