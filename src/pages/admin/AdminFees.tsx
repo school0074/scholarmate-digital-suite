@@ -423,7 +423,14 @@ const AdminFees = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Select a student...</SelectItem>
-                      {/* Students would be loaded from Supabase */}
+                      {students.map((student) => (
+                        <SelectItem key={student.id} value={student.id}>
+                          {student.full_name} -{" "}
+                          {student.student_enrollments?.[0]?.classes
+                            ? `Grade ${student.student_enrollments[0].classes.grade_level}${student.student_enrollments[0].classes.section ? ` ${student.student_enrollments[0].classes.section}` : ""}`
+                            : "No Class"}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
