@@ -86,7 +86,7 @@ const FeaturesSection = () => {
               ✨ Complete Digital Suite
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 sm:mb-6 px-2 sm:px-0">
             Built for Every Role in
             <span className="block text-primary">Modern Education</span>
           </h2>
