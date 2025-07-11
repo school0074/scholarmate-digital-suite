@@ -196,7 +196,7 @@ const AdminDashboard = () => {
             title: "Fee Payment Received",
             description: `${payment.profiles?.full_name || "A student"} paid ₹${payment.paid_amount}`,
             time: payment.payment_date
-              ? new Date(payment.payment_date).toRelativeTimeString()
+              ? formatRelativeTime(payment.payment_date)
               : "Recently",
             priority: "low" as const,
           });
