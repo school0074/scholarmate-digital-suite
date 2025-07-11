@@ -17,6 +17,7 @@ import StudentAttendance from "./pages/student/StudentAttendance";
 import StudentTimetable from "./pages/student/StudentTimetable";
 import StudentExams from "./pages/student/StudentExams";
 import StudentGrades from "./pages/student/StudentGrades";
+import DebugPage from "./pages/DebugPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/debug" element={<DebugPage />} />
               <Route
                 path="/dashboard"
                 element={
