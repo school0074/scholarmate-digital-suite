@@ -16,24 +16,36 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   } | null>(null);
 
   useEffect(() => {
-    // Check for demo access
-    const demoData = localStorage.getItem("demoStudentData");
-    if (demoData) {
+    // Check for demo access (both student and teacher)
+    const demoStudentData = localStorage.getItem("demoStudentData");
+    const demoTeacherData = localStorage.getItem("demoTeacherData");
+
+    if (demoStudentData) {
       try {
-        setDemoProfile(JSON.parse(demoData));
+        setDemoProfile(JSON.parse(demoStudentData));
       } catch (error) {
-        console.error("Error parsing demo data:", error);
+        console.error("Error parsing demo student data:", error);
         localStorage.removeItem("demoStudentData");
+      }
+    } else if (demoTeacherData) {
+      try {
+        setDemoProfile(JSON.parse(demoTeacherData));
+      } catch (error) {
+        console.error("Error parsing demo teacher data:", error);
+        localStorage.removeItem("demoTeacherData");
       }
     }
   }, []);
 
-  // Handle demo access for student routes
+  // Handle demo access for student and teacher routes
   const isDemoAccess = demoProfile?.isDemo;
   const isStudentRoute = allowedRoles?.includes("student");
+  const isTeacherRoute = allowedRoles?.includes("teacher");
+  const isDemoStudent = isDemoAccess && demoProfile?.role === "student";
+  const isDemoTeacher = isDemoAccess && demoProfile?.role === "teacher";
 
-  if (isDemoAccess && isStudentRoute) {
-    // Allow demo access for student routes
+  if ((isDemoStudent && isStudentRoute) || (isDemoTeacher && isTeacherRoute)) {
+    // Allow demo access for matching routes
     return <>{children}</>;
   }
 
