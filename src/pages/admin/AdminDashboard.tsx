@@ -174,9 +174,7 @@ const AdminDashboard = () => {
             type: "registration",
             title: `New ${latestProfile.data.role} Registration`,
             description: `${latestProfile.data.full_name || "Someone"} has registered as a ${latestProfile.data.role}`,
-            time: new Date(
-              latestProfile.data.created_at,
-            ).toRelativeTimeString(),
+            time: formatRelativeTime(latestProfile.data.created_at),
             priority: "medium" as const,
           });
         }
