@@ -1,14 +1,38 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { useAuth } from "@/contexts/AuthContext";
+import { Navigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ('student' | 'teacher' | 'admin')[];
+  allowedRoles?: ("student" | "teacher" | "admin")[];
 }
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { user, profile, loading } = useAuth();
+  const [demoProfile, setDemoProfile] = useState<any>(null);
+
+  useEffect(() => {
+    // Check for demo access
+    const demoData = localStorage.getItem("demoStudentData");
+    if (demoData) {
+      try {
+        setDemoProfile(JSON.parse(demoData));
+      } catch (error) {
+        console.error("Error parsing demo data:", error);
+        localStorage.removeItem("demoStudentData");
+      }
+    }
+  }, []);
+
+  // Handle demo access for student routes
+  const isDemoAccess = demoProfile?.isDemo;
+  const isStudentRoute = allowedRoles?.includes("student");
+
+  if (isDemoAccess && isStudentRoute) {
+    // Allow demo access for student routes
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (
