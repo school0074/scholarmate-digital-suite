@@ -28,6 +28,7 @@ import DebugPage from "./pages/DebugPage";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 import DemoStudentAccess from "./pages/DemoStudentAccess";
+import DemoTeacherAccess from "./pages/DemoTeacherAccess";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/demo" element={<DemoStudentAccess />} />
+              <Route path="/demo-teacher" element={<DemoTeacherAccess />} />
               <Route path="/debug" element={<DebugPage />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
               <Route
