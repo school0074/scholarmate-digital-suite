@@ -393,15 +393,8 @@ const AdminFees = () => {
                       <SelectValue placeholder="Select student" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="student1">
-                        John Doe - Grade 10A
-                      </SelectItem>
-                      <SelectItem value="student2">
-                        Jane Smith - Grade 9B
-                      </SelectItem>
-                      <SelectItem value="student3">
-                        Mike Johnson - Grade 11C
-                      </SelectItem>
+                      <SelectItem value="">Select a student...</SelectItem>
+                      {/* Students would be loaded from Supabase */}
                     </SelectContent>
                   </Select>
                 </div>
@@ -743,7 +736,7 @@ const AdminFees = () => {
                 <div className="flex justify-between">
                   <span>Total Fees Assigned:</span>
                   <span className="font-medium">
-                    ��{stats.totalAmount.toLocaleString()}
+                    ₹{stats.totalAmount.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
