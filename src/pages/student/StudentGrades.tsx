@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   BarChart3,
@@ -49,123 +47,240 @@ interface TermReport {
 }
 
 const StudentGrades = () => {
-  const { profile } = useAuth();
   const { toast } = useToast();
+
+  // Mock student profile data
+  const mockProfile = {
+    id: "student-123",
+    full_name: "John Doe",
+  };
   const [currentTerm, setCurrentTerm] = useState<TermReport | null>(null);
   const [previousTerms, setPreviousTerms] = useState<TermReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTerm, setSelectedTerm] = useState("current");
 
   useEffect(() => {
-    if (profile) {
-      loadGradesData();
-    }
-  }, [profile]);
+    loadMockGradesData();
+  }, []);
 
-  const loadGradesData = async () => {
+  const loadMockGradesData = async () => {
     try {
       setLoading(true);
 
-      // Get student's class
-      const { data: enrollment } = await supabase
-        .from("student_enrollments")
-        .select("class_id")
-        .eq("student_id", profile?.id)
-        .single();
+      // Simulate loading delay
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
-      if (!enrollment) return;
-
-      // Get all marks for the student
-      const { data: marks, error } = await supabase
-        .from("marks")
-        .select(
-          `
-          id,
-          marks_obtained,
-          total_marks,
-          exam_type,
-          exam_date,
-          subjects(
-            id,
-            name,
-            code
-          )
-        `,
-        )
-        .eq("student_id", profile?.id)
-        .order("exam_date", { ascending: false });
-
-      if (error) throw error;
-
-      // Process marks into subject grades
-      const subjectMap = new Map<string, any>();
-
-      marks?.forEach((mark) => {
-        const subjectId = mark.subjects?.id;
-        if (!subjectId) return;
-
-        if (!subjectMap.has(subjectId)) {
-          subjectMap.set(subjectId, {
-            id: subjectId,
-            subject_name: mark.subjects.name,
-            subject_code: mark.subjects.code,
-            marks: [],
-            teacher_name: "TBA", // This would come from teacher assignments
-          });
-        }
-
-        const percentage =
-          mark.total_marks > 0
-            ? (mark.marks_obtained / mark.total_marks) * 100
-            : 0;
-
-        subjectMap.get(subjectId).marks.push({
-          exam_type: mark.exam_type,
-          marks_obtained: mark.marks_obtained || 0,
-          total_marks: mark.total_marks || 0,
-          percentage: Math.round(percentage),
-          date: mark.exam_date || "",
-        });
-      });
-
-      // Calculate overall grades for each subject
-      const subjects = Array.from(subjectMap.values()).map((subject) => {
-        const totalMarks = subject.marks.reduce(
-          (sum: number, mark: any) => sum + mark.marks_obtained,
-          0,
-        );
-        const totalPossible = subject.marks.reduce(
-          (sum: number, mark: any) => sum + mark.total_marks,
-          0,
-        );
-        const overall_percentage =
-          totalPossible > 0 ? (totalMarks / totalPossible) * 100 : 0;
-
-        return {
-          ...subject,
-          overall_percentage: Math.round(overall_percentage),
-          grade: getGrade(overall_percentage),
-          rank: Math.floor(Math.random() * 30) + 1, // Mock rank
-        };
-      });
+      // Generate mock subjects with grades
+      const mockSubjects: SubjectGrade[] = [
+        {
+          id: "1",
+          subject_name: "Mathematics",
+          subject_code: "MATH101",
+          marks: [
+            {
+              exam_type: "Mid-term",
+              marks_obtained: 85,
+              total_marks: 100,
+              percentage: 85,
+              date: "2024-10-15",
+            },
+            {
+              exam_type: "Quiz 1",
+              marks_obtained: 18,
+              total_marks: 20,
+              percentage: 90,
+              date: "2024-09-20",
+            },
+            {
+              exam_type: "Assignment",
+              marks_obtained: 45,
+              total_marks: 50,
+              percentage: 90,
+              date: "2024-09-30",
+            },
+          ],
+          overall_percentage: 87,
+          grade: "A",
+          rank: 3,
+          teacher_name: "Dr. Smith",
+        },
+        {
+          id: "2",
+          subject_name: "Physics",
+          subject_code: "PHY101",
+          marks: [
+            {
+              exam_type: "Lab Test",
+              marks_obtained: 42,
+              total_marks: 50,
+              percentage: 84,
+              date: "2024-10-10",
+            },
+            {
+              exam_type: "Theory Test",
+              marks_obtained: 75,
+              total_marks: 100,
+              percentage: 75,
+              date: "2024-09-25",
+            },
+            {
+              exam_type: "Assignment",
+              marks_obtained: 38,
+              total_marks: 40,
+              percentage: 95,
+              date: "2024-10-01",
+            },
+          ],
+          overall_percentage: 81,
+          grade: "A",
+          rank: 5,
+          teacher_name: "Prof. Johnson",
+        },
+        {
+          id: "3",
+          subject_name: "Chemistry",
+          subject_code: "CHE101",
+          marks: [
+            {
+              exam_type: "Practical",
+              marks_obtained: 35,
+              total_marks: 50,
+              percentage: 70,
+              date: "2024-10-12",
+            },
+            {
+              exam_type: "Theory",
+              marks_obtained: 65,
+              total_marks: 100,
+              percentage: 65,
+              date: "2024-09-28",
+            },
+            {
+              exam_type: "Quiz",
+              marks_obtained: 28,
+              total_marks: 30,
+              percentage: 93,
+              date: "2024-10-05",
+            },
+          ],
+          overall_percentage: 71,
+          grade: "B+",
+          rank: 8,
+          teacher_name: "Dr. Wilson",
+        },
+        {
+          id: "4",
+          subject_name: "English Literature",
+          subject_code: "ENG101",
+          marks: [
+            {
+              exam_type: "Essay",
+              marks_obtained: 72,
+              total_marks: 80,
+              percentage: 90,
+              date: "2024-10-08",
+            },
+            {
+              exam_type: "Comprehension",
+              marks_obtained: 85,
+              total_marks: 100,
+              percentage: 85,
+              date: "2024-09-22",
+            },
+            {
+              exam_type: "Presentation",
+              marks_obtained: 38,
+              total_marks: 40,
+              percentage: 95,
+              date: "2024-10-03",
+            },
+          ],
+          overall_percentage: 89,
+          grade: "A",
+          rank: 2,
+          teacher_name: "Ms. Brown",
+        },
+        {
+          id: "5",
+          subject_name: "History",
+          subject_code: "HIS101",
+          marks: [
+            {
+              exam_type: "Test",
+              marks_obtained: 58,
+              total_marks: 75,
+              percentage: 77,
+              date: "2024-10-14",
+            },
+            {
+              exam_type: "Project",
+              marks_obtained: 42,
+              total_marks: 50,
+              percentage: 84,
+              date: "2024-09-30",
+            },
+            {
+              exam_type: "Quiz",
+              marks_obtained: 22,
+              total_marks: 25,
+              percentage: 88,
+              date: "2024-10-07",
+            },
+          ],
+          overall_percentage: 81,
+          grade: "A",
+          rank: 4,
+          teacher_name: "Mr. Davis",
+        },
+        {
+          id: "6",
+          subject_name: "Computer Science",
+          subject_code: "CS101",
+          marks: [
+            {
+              exam_type: "Programming",
+              marks_obtained: 48,
+              total_marks: 60,
+              percentage: 80,
+              date: "2024-10-11",
+            },
+            {
+              exam_type: "Theory",
+              marks_obtained: 55,
+              total_marks: 80,
+              percentage: 69,
+              date: "2024-09-26",
+            },
+            {
+              exam_type: "Project",
+              marks_obtained: 85,
+              total_marks: 100,
+              percentage: 85,
+              date: "2024-10-04",
+            },
+          ],
+          overall_percentage: 78,
+          grade: "B+",
+          rank: 6,
+          teacher_name: "Mr. Anderson",
+        },
+      ];
 
       // Calculate overall term performance
       const overall_percentage =
-        subjects.length > 0
-          ? subjects.reduce(
-              (sum, subject) => sum + subject.overall_percentage,
-              0,
-            ) / subjects.length
-          : 0;
+        mockSubjects.reduce(
+          (sum, subject) => sum + subject.overall_percentage,
+          0,
+        ) / mockSubjects.length;
 
       const currentTermData: TermReport = {
-        term: "Current Term",
-        subjects,
+        term: "Current Term (2024-25)",
+        subjects: mockSubjects,
         overall_percentage: Math.round(overall_percentage),
         overall_grade: getGrade(overall_percentage),
-        rank: Math.floor(Math.random() * 30) + 1,
-        attendance_percentage: 85, // This would come from attendance data
-        total_students: 30,
+        rank: 4,
+        attendance_percentage: 92,
+        total_students: 32,
       };
 
       setCurrentTerm(currentTermData);
@@ -173,15 +288,33 @@ const StudentGrades = () => {
       // Mock previous terms data
       setPreviousTerms([
         {
-          term: "Term 1",
-          subjects: subjects.map((s) => ({
+          term: "Term 1 (2024-25)",
+          subjects: mockSubjects.map((s) => ({
             ...s,
-            overall_percentage: s.overall_percentage - 5,
+            overall_percentage: Math.max(
+              40,
+              s.overall_percentage - Math.floor(Math.random() * 10),
+            ),
           })),
-          overall_percentage: Math.round(overall_percentage) - 3,
-          overall_grade: getGrade(overall_percentage - 3),
-          rank: Math.floor(Math.random() * 30) + 1,
+          overall_percentage: Math.round(overall_percentage) - 5,
+          overall_grade: getGrade(overall_percentage - 5),
+          rank: 6,
           attendance_percentage: 88,
+          total_students: 32,
+        },
+        {
+          term: "Term 2 (2023-24)",
+          subjects: mockSubjects.map((s) => ({
+            ...s,
+            overall_percentage: Math.max(
+              35,
+              s.overall_percentage - Math.floor(Math.random() * 15),
+            ),
+          })),
+          overall_percentage: Math.round(overall_percentage) - 8,
+          overall_grade: getGrade(overall_percentage - 8),
+          rank: 8,
+          attendance_percentage: 85,
           total_students: 30,
         },
       ]);
