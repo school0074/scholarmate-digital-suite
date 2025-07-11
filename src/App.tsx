@@ -22,6 +22,8 @@ import StudentReminders from "./pages/student/StudentReminders";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import TeacherHomework from "./pages/teacher/TeacherHomework";
 import TeacherAttendance from "./pages/teacher/TeacherAttendance";
+import TeacherMaterials from "./pages/teacher/TeacherMaterials";
+import TeacherAnnouncements from "./pages/teacher/TeacherAnnouncements";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminInviteTeacher from "./pages/admin/AdminInviteTeacher";
 import DebugPage from "./pages/DebugPage";
@@ -115,6 +117,14 @@ const App = () => (
                         <Route
                           path="attendance"
                           element={<TeacherAttendance />}
+                        />
+                        <Route
+                          path="materials"
+                          element={<TeacherMaterials />}
+                        />
+                        <Route
+                          path="announcements"
+                          element={<TeacherAnnouncements />}
                         />
                         <Route
                           path="*"
