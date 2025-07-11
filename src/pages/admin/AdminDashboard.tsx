@@ -219,9 +219,7 @@ const AdminDashboard = () => {
             type: "approval",
             title: "Study Material Pending Approval",
             description: `${latestPending.data.title} requires approval`,
-            time: new Date(
-              latestPending.data.created_at,
-            ).toRelativeTimeString(),
+            time: formatRelativeTime(latestPending.data.created_at),
             priority: "high" as const,
           });
         }
