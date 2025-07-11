@@ -90,7 +90,7 @@ const FeaturesSection = () => {
             Built for Every Role in
             <span className="block text-primary">Modern Education</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed px-4 sm:px-0">
             From students to administrators, our comprehensive platform provides
             tailored tools and features that enhance productivity and learning
             outcomes.
