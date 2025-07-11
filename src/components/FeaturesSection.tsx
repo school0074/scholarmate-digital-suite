@@ -8,7 +8,8 @@ const FeaturesSection = () => {
     {
       icon: "🎓",
       title: "Student Portal",
-      description: "Comprehensive digital platform designed to enhance student learning experience with modern tools and seamless connectivity.",
+      description:
+        "Comprehensive digital platform designed to enhance student learning experience with modern tools and seamless connectivity.",
       userType: "student" as const,
       image: studentIcon,
       features: [
@@ -23,13 +24,14 @@ const FeaturesSection = () => {
         "Progress Tracker",
         "Quiz & Brain Games",
         "E-Learning Access",
-        "Achievement Wall"
-      ]
+        "Achievement Wall",
+      ],
     },
     {
       icon: "📚",
       title: "Teacher Dashboard",
-      description: "Powerful teaching tools that streamline classroom management, content delivery, and student assessment processes.",
+      description:
+        "Powerful teaching tools that streamline classroom management, content delivery, and student assessment processes.",
       userType: "teacher" as const,
       image: teacherIcon,
       features: [
@@ -44,13 +46,14 @@ const FeaturesSection = () => {
         "Performance Analytics",
         "Resource Library",
         "Video Messaging",
-        "Parent Communication"
-      ]
+        "Parent Communication",
+      ],
     },
     {
       icon: "⚙️",
       title: "Admin Control",
-      description: "Complete administrative oversight with advanced analytics, user management, and system-wide control capabilities.",
+      description:
+        "Complete administrative oversight with advanced analytics, user management, and system-wide control capabilities.",
       userType: "admin" as const,
       image: adminIcon,
       features: [
@@ -65,31 +68,37 @@ const FeaturesSection = () => {
         "Fee Management",
         "System Settings",
         "Reports & Analytics",
-        "Security Controls"
-      ]
-    }
+        "Security Controls",
+      ],
+    },
   ];
 
   return (
-    <section id="features" className="py-20 bg-gradient-to-br from-background to-muted/30">
+    <section
+      id="features"
+      className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-background to-muted/30"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-8 sm:mb-12 lg:mb-16">
           <div className="inline-flex items-center px-4 py-2 bg-primary/10 rounded-full border border-primary/20 mb-6">
-            <span className="text-primary text-sm font-medium">✨ Complete Digital Suite</span>
+            <span className="text-primary text-sm font-medium">
+              ✨ Complete Digital Suite
+            </span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 sm:mb-6 px-2 sm:px-0">
             Built for Every Role in
             <span className="block text-primary">Modern Education</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            From students to administrators, our comprehensive platform provides tailored tools 
-            and features that enhance productivity and learning outcomes.
+          <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed px-4 sm:px-0">
+            From students to administrators, our comprehensive platform provides
+            tailored tools and features that enhance productivity and learning
+            outcomes.
           </p>
         </div>
 
         {/* Feature Cards Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {features.map((feature, index) => (
             <FeatureCard
               key={index}

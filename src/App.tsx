@@ -29,6 +29,13 @@ import TeacherMessages from "./pages/teacher/TeacherMessages";
 import TeacherTimetable from "./pages/teacher/TeacherTimetable";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminInviteTeacher from "./pages/admin/AdminInviteTeacher";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminSettings from "./pages/admin/AdminSettings";
+import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminClasses from "./pages/admin/AdminClasses";
+import AdminFees from "./pages/admin/AdminFees";
+import AdminLogs from "./pages/admin/AdminLogs";
 import DebugPage from "./pages/DebugPage";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
@@ -159,6 +166,16 @@ const App = () => (
                           path="invite-teacher"
                           element={<AdminInviteTeacher />}
                         />
+                        <Route path="users" element={<AdminUsers />} />
+                        <Route path="settings" element={<AdminSettings />} />
+                        <Route
+                          path="announcements"
+                          element={<AdminAnnouncements />}
+                        />
+                        <Route path="analytics" element={<AdminAnalytics />} />
+                        <Route path="classes" element={<AdminClasses />} />
+                        <Route path="fees" element={<AdminFees />} />
+                        <Route path="logs" element={<AdminLogs />} />
                         <Route
                           path="*"
                           element={

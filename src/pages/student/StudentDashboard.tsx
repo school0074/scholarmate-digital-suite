@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   CalendarDays,
   BookOpen,
@@ -81,80 +82,162 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadMockDashboardData();
+    loadDashboardData();
   }, []);
 
-  const loadMockDashboardData = async () => {
+  const loadDashboardData = async () => {
     try {
       setLoading(true);
 
-      // Simulate loading delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
 
-      // Set mock stats
+      // Calculate attendance percentage (last 30 days)
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+      const { data: attendanceRecords } = await supabase
+        .from("attendance")
+        .select("status")
+        .eq("student_id", user.id)
+        .gte("date", thirtyDaysAgo);
+
+      const presentCount =
+        attendanceRecords?.filter((record) => record.status === "present")
+          .length || 0;
+      const totalRecords = attendanceRecords?.length || 1;
+      const attendancePercentage = Math.round(
+        (presentCount / totalRecords) * 100,
+      );
+
+      // Get pending homework count
+      const { data: allHomework } = await supabase
+        .from("homework")
+        .select("id")
+        .gte("due_date", new Date().toISOString());
+
+      const { data: submittedHomework } = await supabase
+        .from("student_submissions")
+        .select("homework_id")
+        .eq("student_id", user.id);
+
+      const submittedIds =
+        submittedHomework?.map((sub) => sub.homework_id) || [];
+      const pendingHomework =
+        allHomework?.filter((hw) => !submittedIds.includes(hw.id)).length || 0;
+
+      // Get upcoming exams
+      const { data: upcomingExams } = await supabase
+        .from("exams")
+        .select("*")
+        .gte("exam_date", new Date().toISOString().split("T")[0])
+        .order("exam_date", { ascending: true });
+
+      // Get unread messages
+      const { data: unreadMessages } = await supabase
+        .from("messages")
+        .select("id")
+        .eq("recipient_id", user.id)
+        .eq("read", false);
+
+      // Get total achievement points
+      const { data: userAchievements } = await supabase
+        .from("achievements")
+        .select("points")
+        .eq("student_id", user.id);
+
+      const totalPoints =
+        userAchievements?.reduce(
+          (sum, achievement) => sum + (achievement.points || 0),
+          0,
+        ) || 0;
+
+      // Get pending fees
+      const { data: pendingFees } = await supabase
+        .from("fees")
+        .select("amount")
+        .eq("student_id", user.id)
+        .eq("paid", false);
+
+      const totalPendingFees =
+        pendingFees?.reduce((sum, fee) => sum + fee.amount, 0) || 0;
+
       setStats({
-        attendancePercentage: 92,
-        pendingHomework: 3,
-        upcomingExams: 2,
-        unreadMessages: 5,
-        totalPoints: 450,
-        currentRank: 1,
-        pendingFees: 0,
+        attendancePercentage,
+        pendingHomework,
+        upcomingExams: upcomingExams?.length || 0,
+        unreadMessages: unreadMessages?.length || 0,
+        totalPoints,
+        currentRank: 1, // This would need a more complex calculation
+        pendingFees: totalPendingFees,
       });
 
-      // Set mock upcoming events
-      setUpcomingEvents([
-        {
-          id: "1",
-          title: "Mathematics Test",
-          date: "2024-12-20",
-          type: "exam",
-          subject: "Mathematics",
-        },
-        {
-          id: "2",
-          title: "Physics Assignment Due",
-          date: "2024-12-18",
-          type: "assignment",
-          subject: "Physics",
-        },
-        {
-          id: "3",
-          title: "English Literature Quiz",
-          date: "2024-12-22",
-          type: "exam",
-          subject: "English",
-        },
-      ]);
+      // Set upcoming events from exams and homework
+      const events = [];
 
-      // Set mock achievements
-      setRecentAchievements([
-        {
-          id: "1",
-          title: "Perfect Attendance",
-          description: "Attended all classes this month",
-          badge_icon: "🏆",
-          achieved_at: "2024-12-10",
-        },
-        {
-          id: "2",
-          title: "Top Performer",
-          description: "Scored highest in Mathematics test",
-          badge_icon: "⭐",
-          achieved_at: "2024-12-08",
-        },
-        {
-          id: "3",
-          title: "Assignment Master",
-          description: "Submitted all assignments on time",
-          badge_icon: "📚",
-          achieved_at: "2024-12-05",
-        },
-      ]);
+      if (upcomingExams) {
+        upcomingExams.slice(0, 2).forEach((exam) => {
+          events.push({
+            id: exam.id,
+            title: exam.title,
+            date: exam.exam_date,
+            type: "exam" as const,
+            subject: "Subject", // Would need to join with subjects table
+          });
+        });
+      }
 
-      setDailyQuote(
-        '"The future belongs to those who believe in the beauty of their dreams." - Eleanor Roosevelt',
-      );
+      // Get recent homework with due dates
+      const { data: recentHomework } = await supabase
+        .from("homework")
+        .select("*, subjects(name)")
+        .gte("due_date", new Date().toISOString())
+        .order("due_date", { ascending: true })
+        .limit(1);
+
+      if (recentHomework && recentHomework[0]) {
+        events.push({
+          id: recentHomework[0].id,
+          title: recentHomework[0].title,
+          date:
+            recentHomework[0].due_date?.split("T")[0] ||
+            new Date().toISOString().split("T")[0],
+          type: "assignment" as const,
+          subject: recentHomework[0].subjects?.name || "General",
+        });
+      }
+
+      setUpcomingEvents(events);
+
+      // Get real achievements
+      const { data: realAchievements } = await supabase
+        .from("achievements")
+        .select("*")
+        .eq("student_id", user.id)
+        .order("achieved_at", { ascending: false })
+        .limit(3);
+
+      setRecentAchievements(realAchievements || []);
+
+      // Get daily quote
+      const { data: dailyQuoteData } = await supabase
+        .from("daily_quotes")
+        .select("quote_text, author")
+        .eq("date_featured", new Date().toISOString().split("T")[0])
+        .single();
+
+      if (dailyQuoteData) {
+        setDailyQuote(
+          `"${dailyQuoteData.quote_text}" - ${dailyQuoteData.author || "Unknown"}`,
+        );
+      } else {
+        // Fallback quote
+        setDailyQuote(
+          '"Education is the most powerful weapon which you can use to change the world." - Nelson Mandela',
+        );
+      }
     } catch (error) {
       console.error("Error loading dashboard data:", error);
       toast({

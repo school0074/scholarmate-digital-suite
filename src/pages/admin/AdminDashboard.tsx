@@ -54,6 +54,22 @@ interface SystemAlert {
   timestamp: string;
 }
 
+// Utility function to format relative time
+const formatRelativeTime = (dateString: string): string => {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInMinutes < 1) return "Just now";
+  if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
+  if (diffInHours < 24) return `${diffInHours} hours ago`;
+  if (diffInDays < 7) return `${diffInDays} days ago`;
+  return date.toLocaleDateString();
+};
+
 const AdminDashboard = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
@@ -120,6 +136,15 @@ const AdminDashboard = () => {
           0,
         ) || 0;
 
+      // Load recent registrations (last 7 days)
+      const { data: recentProfiles } = await supabase
+        .from("profiles")
+        .select("id, created_at")
+        .gte(
+          "created_at",
+          new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        );
+
       setStats({
         totalStudents: studentsResult.count || 0,
         totalTeachers: teachersResult.count || 0,
@@ -127,55 +152,83 @@ const AdminDashboard = () => {
         totalRevenue: totalRevenue,
         pendingApprovals: pendingMaterials?.length || 0,
         activeAnnouncements: announcements?.length || 0,
-        recentRegistrations: 5, // This would be calculated based on recent signups
-        systemAlerts: 2, // Mock data
+        recentRegistrations: recentProfiles?.length || 0,
+        systemAlerts: 0, // Will be calculated from actual system logs
       });
 
-      // Mock recent activity
-      setRecentActivity([
-        {
-          id: "1",
-          type: "registration",
-          title: "New Teacher Registration",
-          description: "John Smith has registered as a teacher",
-          time: "10 minutes ago",
-          priority: "medium",
-        },
-        {
-          id: "2",
-          type: "payment",
-          title: "Fee Payment Received",
-          description: "Student Sarah Wilson paid monthly fees",
-          time: "25 minutes ago",
-          priority: "low",
-        },
-        {
-          id: "3",
-          type: "approval",
-          title: "Study Material Pending",
-          description: "Math worksheet requires approval",
-          time: "1 hour ago",
-          priority: "high",
-        },
-      ]);
+      // Load real recent activity from multiple sources
+      const recentActivityData = [];
 
-      // Mock system alerts
-      setSystemAlerts([
-        {
-          id: "1",
-          title: "Server Maintenance",
-          message: "Scheduled maintenance tonight at 11 PM",
-          type: "info",
-          timestamp: "2 hours ago",
-        },
-        {
-          id: "2",
-          title: "High Login Volume",
-          message: "Unusual login activity detected",
-          type: "warning",
-          timestamp: "30 minutes ago",
-        },
-      ]);
+      // Recent registrations
+      if (recentProfiles && recentProfiles.length > 0) {
+        const latestProfile = await supabase
+          .from("profiles")
+          .select("full_name, role, created_at")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (latestProfile.data) {
+          recentActivityData.push({
+            id: "reg-" + latestProfile.data.created_at,
+            type: "registration",
+            title: `New ${latestProfile.data.role} Registration`,
+            description: `${latestProfile.data.full_name || "Someone"} has registered as a ${latestProfile.data.role}`,
+            time: formatRelativeTime(latestProfile.data.created_at),
+            priority: "medium" as const,
+          });
+        }
+      }
+
+      // Recent payments
+      const { data: recentPayments } = await supabase
+        .from("fees")
+        .select("*, profiles(full_name)")
+        .eq("paid", true)
+        .order("payment_date", { ascending: false })
+        .limit(2);
+
+      if (recentPayments) {
+        recentPayments.forEach((payment) => {
+          recentActivityData.push({
+            id: "payment-" + payment.id,
+            type: "payment",
+            title: "Fee Payment Received",
+            description: `${payment.profiles?.full_name || "A student"} paid ₹${payment.paid_amount}`,
+            time: payment.payment_date
+              ? formatRelativeTime(payment.payment_date)
+              : "Recently",
+            priority: "low" as const,
+          });
+        });
+      }
+
+      // Pending approvals
+      if (pendingMaterials && pendingMaterials.length > 0) {
+        const latestPending = await supabase
+          .from("study_materials")
+          .select("title, created_at, profiles(full_name)")
+          .eq("approved", false)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (latestPending.data) {
+          recentActivityData.push({
+            id: "approval-" + latestPending.data.created_at,
+            type: "approval",
+            title: "Study Material Pending Approval",
+            description: `${latestPending.data.title} requires approval`,
+            time: formatRelativeTime(latestPending.data.created_at),
+            priority: "high" as const,
+          });
+        }
+      }
+
+      setRecentActivity(recentActivityData);
+
+      // For now, using empty system alerts - in production, this would come from a logging system
+      setSystemAlerts([]);
     } catch (error) {
       console.error("Error loading admin data:", error);
       toast({

@@ -89,110 +89,102 @@ const TeacherAnnouncements = () => {
   };
 
   useEffect(() => {
-    loadMockData();
+    loadTeacherData();
   }, []);
 
-  const loadMockData = async () => {
+  const loadTeacherData = async () => {
     try {
       setLoading(true);
 
-      // Simulate loading delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
 
-      // Mock classes data
-      const mockClasses: Class[] = [
-        { id: "1", name: "Grade 10", section: "A", studentCount: 32 },
-        { id: "2", name: "Grade 10", section: "B", studentCount: 28 },
-        { id: "3", name: "Grade 9", section: "A", studentCount: 30 },
-      ];
+      // Get teacher's classes from teacher_assignments
+      const { data: teacherAssignments } = await supabase
+        .from("teacher_assignments")
+        .select(
+          `
+          *,
+          classes (
+            id,
+            name,
+            grade_level,
+            section
+          )
+        `,
+        )
+        .eq("teacher_id", user.id);
 
-      // Mock announcements
-      const mockAnnouncements: Announcement[] = [
-        {
-          id: "1",
-          title: "Upcoming Physics Lab Session",
-          content:
-            "Dear students, we will be conducting a practical lab session on Newton's Laws this Friday. Please bring your lab notebooks and safety goggles. The session will start at 2:00 PM in Lab Room 1.",
-          priority: "medium",
-          type: "assignment",
-          targetAudience: "class",
-          classes: ["Grade 10 A"],
-          publishedDate: "2024-12-10T09:30:00Z",
-          isPublished: true,
-          isScheduled: false,
-          views: 28,
-          readBy: 25,
-          totalRecipients: 32,
-        },
-        {
-          id: "2",
-          title: "Mathematics Test Postponed",
-          content:
-            "The mathematics test scheduled for December 15th has been postponed to December 18th due to unforeseen circumstances. Please prepare accordingly and use the extra time to review quadratic equations.",
-          priority: "high",
-          type: "exam",
-          targetAudience: "class",
-          classes: ["Grade 10 A", "Grade 10 B"],
-          publishedDate: "2024-12-09T14:15:00Z",
-          isPublished: true,
-          isScheduled: false,
-          views: 55,
-          readBy: 52,
-          totalRecipients: 60,
-        },
-        {
-          id: "3",
-          title: "Science Fair Registration Open",
-          content:
-            "The annual science fair registration is now open! Students interested in participating should submit their project proposals by December 20th. This is a great opportunity to showcase your creativity and scientific knowledge.",
-          priority: "medium",
-          type: "event",
-          targetAudience: "all",
-          classes: [],
-          publishedDate: "2024-12-08T11:00:00Z",
-          isPublished: true,
-          isScheduled: false,
-          views: 89,
-          readBy: 67,
-          totalRecipients: 90,
-        },
-        {
-          id: "4",
-          title: "Holiday Homework Assignment",
-          content:
-            "Students will receive their holiday homework assignments next week. Please ensure you collect them before leaving for winter break. The assignments are designed to help you review and reinforce key concepts.",
-          priority: "low",
-          type: "assignment",
-          targetAudience: "class",
-          classes: ["Grade 9 A"],
-          scheduledDate: "2024-12-15T10:00:00Z",
-          publishedDate: "",
-          isPublished: false,
-          isScheduled: true,
-          views: 0,
-          readBy: 0,
-          totalRecipients: 30,
-        },
-        {
-          id: "5",
-          title: "Parent-Teacher Meeting Schedule",
-          content:
-            "The next parent-teacher meeting is scheduled for December 22nd from 9:00 AM to 12:00 PM. Please inform your parents about the meeting. Individual time slots will be shared via email.",
-          priority: "high",
-          type: "event",
-          targetAudience: "all",
-          classes: [],
-          publishedDate: "2024-12-05T16:30:00Z",
-          isPublished: true,
-          isScheduled: false,
-          views: 134,
-          readBy: 98,
-          totalRecipients: 120,
-        },
-      ];
+      // Calculate student counts for each class
+      const classesWithCounts = await Promise.all(
+        (teacherAssignments || []).map(async (assignment) => {
+          const { data: enrollments } = await supabase
+            .from("student_enrollments")
+            .select("id")
+            .eq("class_id", assignment.classes?.id)
+            .eq("status", "active");
 
-      setClasses(mockClasses);
-      setAnnouncements(mockAnnouncements);
+          return {
+            id: assignment.classes?.id || "",
+            name:
+              assignment.classes?.name ||
+              `Grade ${assignment.classes?.grade_level}`,
+            section: assignment.classes?.section || "",
+            studentCount: enrollments?.length || 0,
+          };
+        }),
+      );
+
+      setClasses(classesWithCounts);
+
+      // Get announcements created by this teacher
+      const { data: teacherAnnouncements } = await supabase
+        .from("announcements")
+        .select(
+          `
+          *,
+          classes (
+            name,
+            grade_level,
+            section
+          )
+        `,
+        )
+        .eq("author_id", user.id)
+        .order("created_at", { ascending: false });
+
+      // Format announcements to match the interface
+      const formattedAnnouncements: Announcement[] = (
+        teacherAnnouncements || []
+      ).map((announcement) => ({
+        id: announcement.id,
+        title: announcement.title,
+        content: announcement.content,
+        priority:
+          (announcement.priority as "low" | "medium" | "high") || "medium",
+        type: "general", // Default type
+        targetAudience: announcement.class_id ? "class" : "all",
+        classes: announcement.classes
+          ? [
+              `${announcement.classes.name || `Grade ${announcement.classes.grade_level}`}${announcement.classes.section ? ` ${announcement.classes.section}` : ""}`,
+            ]
+          : [],
+        publishedDate: announcement.created_at,
+        isPublished:
+          !!announcement.expires_at &&
+          new Date(announcement.expires_at) > new Date(),
+        isScheduled: false,
+        views: Math.floor(Math.random() * 50) + 10, // Mock view count
+        readBy: Math.floor(Math.random() * 30) + 5, // Mock read count
+        totalRecipients:
+          classesWithCounts.find((c) => c.id === announcement.class_id)
+            ?.studentCount || 100,
+        scheduledDate: announcement.expires_at || undefined,
+      }));
+
+      setAnnouncements(formattedAnnouncements);
     } catch (error) {
       console.error("Error loading data:", error);
       toast({

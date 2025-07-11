@@ -1,11 +1,19 @@
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Mail, Phone, MapPin, Github, Twitter, Linkedin } from "lucide-react";
+import {
+  GraduationCap,
+  Mail,
+  Phone,
+  MapPin,
+  Github,
+  Twitter,
+  Linkedin,
+} from "lucide-react";
 
 const Footer = () => {
   return (
     <footer className="bg-card border-t border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
@@ -13,13 +21,15 @@ const Footer = () => {
                 <GraduationCap className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-foreground">ScholarMate</h3>
+                <h3 className="text-lg font-bold text-foreground">
+                  ScholarMate
+                </h3>
                 <p className="text-sm text-muted-foreground">Digital Suite</p>
               </div>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Transforming education through comprehensive digital solutions for schools, 
-              teachers, and students worldwide.
+              Transforming education through comprehensive digital solutions for
+              schools, teachers, and students worldwide.
             </p>
             <div className="flex space-x-3">
               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -38,11 +48,46 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold text-foreground mb-4">Product</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">Features</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">Pricing</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">Demo</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">API</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">Integrations</a></li>
+              <li>
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Features
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Pricing
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Demo
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  API
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Integrations
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -50,11 +95,46 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold text-foreground mb-4">Solutions</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">For Students</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">For Teachers</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">For Admins</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">Enterprise</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">Custom Solutions</a></li>
+              <li>
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  For Students
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  For Teachers
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  For Admins
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Enterprise
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Custom Solutions
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -79,14 +159,29 @@ const Footer = () => {
         </div>
 
         {/* Bottom Section */}
-        <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+        <div className="border-t border-border mt-6 sm:mt-8 pt-6 sm:pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground">
             © 2024 ScholarMate Digital Suite. All rights reserved.
           </p>
-          <div className="flex space-x-6 mt-4 md:mt-0 text-sm">
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">Privacy Policy</a>
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">Terms of Service</a>
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">Cookie Policy</a>
+          <div className="flex flex-wrap justify-center md:justify-end space-x-4 sm:space-x-6 mt-4 md:mt-0 text-sm">
+            <a
+              href="#"
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
+              Privacy Policy
+            </a>
+            <a
+              href="#"
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
+              Terms of Service
+            </a>
+            <a
+              href="#"
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
+              Cookie Policy
+            </a>
           </div>
         </div>
       </div>
