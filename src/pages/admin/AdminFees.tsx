@@ -184,6 +184,33 @@ const AdminFees = () => {
     }
   };
 
+  const loadStudents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(
+          `
+          id,
+          full_name,
+          email,
+          student_enrollments (
+            classes (
+              name,
+              grade_level,
+              section
+            )
+          )
+        `,
+        )
+        .eq("role", "student");
+
+      if (error) throw error;
+      setStudents(data || []);
+    } catch (error) {
+      console.error("Error loading students:", error);
+    }
+  };
+
   const markFeeAsPaid = async (feeId: string, amount: number) => {
     try {
       const { error } = await supabase
