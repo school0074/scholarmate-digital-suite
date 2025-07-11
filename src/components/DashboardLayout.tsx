@@ -1,10 +1,11 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import AppSidebar from '@/components/AppSidebar';
-import { Outlet } from 'react-router-dom';
-import { Bell, Search, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useAuth } from "@/contexts/AuthContext";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import AppSidebar from "@/components/AppSidebar";
+import BottomNav from "@/components/BottomNav";
+import { Outlet } from "react-router-dom";
+import { Bell, Search, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +23,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
-        
+
         <div className="flex-1 flex flex-col">
           {/* Top Header */}
           <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
@@ -51,20 +52,30 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                 {/* User Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center space-x-2 h-auto">
+                    <Button
+                      variant="ghost"
+                      className="flex items-center space-x-2 h-auto"
+                    >
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={profile?.avatar_url || ''} />
+                        <AvatarImage src={profile?.avatar_url || ""} />
                         <AvatarFallback className="bg-primary text-primary-foreground">
-                          {profile?.full_name?.charAt(0) || 'U'}
+                          {profile?.full_name?.charAt(0) || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="text-left hidden sm:block">
-                        <p className="text-sm font-medium">{profile?.full_name || 'User'}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{profile?.role}</p>
+                        <p className="text-sm font-medium">
+                          {profile?.full_name || "User"}
+                        </p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {profile?.role}
+                        </p>
                       </div>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-card border border-border shadow-large z-50" align="end">
+                  <DropdownMenuContent
+                    className="w-56 bg-card border border-border shadow-large z-50"
+                    align="end"
+                  >
                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="hover:bg-muted">
@@ -76,7 +87,10 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                       <span>Notifications</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={signOut} className="hover:bg-muted text-destructive">
+                    <DropdownMenuItem
+                      onClick={signOut}
+                      className="hover:bg-muted text-destructive"
+                    >
                       <span>Sign Out</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -86,9 +100,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-auto">
-            {children}
-          </main>
+          <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </div>
     </SidebarProvider>
