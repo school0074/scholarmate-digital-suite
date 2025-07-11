@@ -12,6 +12,17 @@ import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import StudentIDCard from "./pages/student/StudentIDCard";
 import StudentHomework from "./pages/student/StudentHomework";
+import StudentDashboard from "./pages/student/StudentDashboard";
+import StudentAttendance from "./pages/student/StudentAttendance";
+import StudentTimetable from "./pages/student/StudentTimetable";
+import StudentExams from "./pages/student/StudentExams";
+import StudentGrades from "./pages/student/StudentGrades";
+import TeacherDashboard from "./pages/teacher/TeacherDashboard";
+import TeacherHomework from "./pages/teacher/TeacherHomework";
+import TeacherAttendance from "./pages/teacher/TeacherAttendance";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminInviteTeacher from "./pages/admin/AdminInviteTeacher";
+import DebugPage from "./pages/DebugPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,49 +38,106 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<AuthPage />} />
-              <Route 
-                path="/dashboard" 
+              <Route path="/debug" element={<DebugPage />} />
+              <Route
+                path="/dashboard"
                 element={
                   <ProtectedRoute>
                     <DashboardLayout>
                       <DashboardPage />
                     </DashboardLayout>
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/student/*" 
+              <Route
+                path="/student/*"
                 element={
-                  <ProtectedRoute allowedRoles={['student']}>
+                  <ProtectedRoute allowedRoles={["student"]}>
                     <DashboardLayout>
                       <Routes>
+                        <Route
+                          path="dashboard"
+                          element={<StudentDashboard />}
+                        />
                         <Route path="id-card" element={<StudentIDCard />} />
+                        <Route
+                          path="attendance"
+                          element={<StudentAttendance />}
+                        />
                         <Route path="homework" element={<StudentHomework />} />
-                        <Route path="*" element={<div className="p-6">More student features coming soon...</div>} />
+                        <Route
+                          path="timetable"
+                          element={<StudentTimetable />}
+                        />
+                        <Route path="exams" element={<StudentExams />} />
+                        <Route path="grades" element={<StudentGrades />} />
+                        <Route
+                          path="*"
+                          element={
+                            <div className="p-6">
+                              More student features coming soon...
+                            </div>
+                          }
+                        />
                       </Routes>
                     </DashboardLayout>
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/teacher/*" 
+              <Route
+                path="/teacher/*"
                 element={
-                  <ProtectedRoute allowedRoles={['teacher']}>
+                  <ProtectedRoute allowedRoles={["teacher"]}>
                     <DashboardLayout>
-                      <div className="p-6">Teacher Features Coming Soon...</div>
+                      <Routes>
+                        <Route
+                          path="dashboard"
+                          element={<TeacherDashboard />}
+                        />
+                        <Route
+                          path="homework/*"
+                          element={<TeacherHomework />}
+                        />
+                        <Route
+                          path="attendance"
+                          element={<TeacherAttendance />}
+                        />
+                        <Route
+                          path="*"
+                          element={
+                            <div className="p-6">
+                              More teacher features coming soon...
+                            </div>
+                          }
+                        />
+                      </Routes>
                     </DashboardLayout>
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/admin/*" 
+              <Route
+                path="/admin/*"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={["admin"]}>
                     <DashboardLayout>
-                      <div className="p-6">Admin Features Coming Soon...</div>
+                      <Routes>
+                        <Route path="dashboard" element={<AdminDashboard />} />
+                        <Route
+                          path="invite-teacher"
+                          element={<AdminInviteTeacher />}
+                        />
+                        <Route
+                          path="*"
+                          element={
+                            <div className="p-6">
+                              More admin features coming soon...
+                            </div>
+                          }
+                        />
+                      </Routes>
                     </DashboardLayout>
                   </ProtectedRoute>
-                } 
+                }
               />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
