@@ -3,8 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   CalendarDays,
@@ -57,8 +55,15 @@ interface Achievement {
 }
 
 const StudentDashboard = () => {
-  const { profile } = useAuth();
   const { toast } = useToast();
+
+  // Mock student profile data
+  const mockProfile = {
+    id: "student-123",
+    full_name: "John Doe",
+    email: "john.doe@student.school.com",
+    avatar_url: null,
+  };
   const [stats, setStats] = useState<DashboardStats>({
     attendancePercentage: 0,
     pendingHomework: 0,
@@ -76,46 +81,80 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (profile) {
-      loadDashboardData();
-    }
-  }, [profile]);
+    loadMockDashboardData();
+  }, []);
 
-  const loadDashboardData = async () => {
+  const loadMockDashboardData = async () => {
     try {
       setLoading(true);
 
-      // Load various dashboard data in parallel
-      const [
-        attendanceData,
-        homeworkData,
-        examData,
-        messageData,
-        achievementData,
-        feeData,
-        quoteData,
-      ] = await Promise.all([
-        loadAttendanceStats(),
-        loadHomeworkStats(),
-        loadExamStats(),
-        loadMessageStats(),
-        loadAchievements(),
-        loadFeeStats(),
-        loadDailyQuote(),
-      ]);
+      // Simulate loading delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
+      // Set mock stats
       setStats({
-        attendancePercentage: attendanceData.percentage,
-        pendingHomework: homeworkData.pending,
-        upcomingExams: examData.upcoming,
-        unreadMessages: messageData.unread,
-        totalPoints: achievementData.totalPoints,
-        currentRank: 1, // Calculate based on leaderboard
-        pendingFees: feeData.pending,
+        attendancePercentage: 92,
+        pendingHomework: 3,
+        upcomingExams: 2,
+        unreadMessages: 5,
+        totalPoints: 450,
+        currentRank: 1,
+        pendingFees: 0,
       });
 
-      setRecentAchievements(achievementData.recent);
-      setDailyQuote(quoteData);
+      // Set mock upcoming events
+      setUpcomingEvents([
+        {
+          id: "1",
+          title: "Mathematics Test",
+          date: "2024-12-20",
+          type: "exam",
+          subject: "Mathematics",
+        },
+        {
+          id: "2",
+          title: "Physics Assignment Due",
+          date: "2024-12-18",
+          type: "assignment",
+          subject: "Physics",
+        },
+        {
+          id: "3",
+          title: "English Literature Quiz",
+          date: "2024-12-22",
+          type: "exam",
+          subject: "English",
+        },
+      ]);
+
+      // Set mock achievements
+      setRecentAchievements([
+        {
+          id: "1",
+          title: "Perfect Attendance",
+          description: "Attended all classes this month",
+          badge_icon: "🏆",
+          achieved_at: "2024-12-10",
+        },
+        {
+          id: "2",
+          title: "Top Performer",
+          description: "Scored highest in Mathematics test",
+          badge_icon: "⭐",
+          achieved_at: "2024-12-08",
+        },
+        {
+          id: "3",
+          title: "Assignment Master",
+          description: "Submitted all assignments on time",
+          badge_icon: "📚",
+          achieved_at: "2024-12-05",
+        },
+      ]);
+
+      setDailyQuote(
+        '"The future belongs to those who believe in the beauty of their dreams." - Eleanor Roosevelt',
+      );
     } catch (error) {
       console.error("Error loading dashboard data:", error);
       toast({
@@ -126,136 +165,6 @@ const StudentDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadAttendanceStats = async () => {
-    const { data, error } = await supabase
-      .from("attendance")
-      .select("status")
-      .eq("student_id", profile?.id)
-      .gte(
-        "date",
-        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split("T")[0],
-      );
-
-    if (error) throw error;
-
-    const total = data.length;
-    const present = data.filter((a) => a.status === "present").length;
-    const percentage = total > 0 ? (present / total) * 100 : 0;
-
-    return { percentage: Math.round(percentage) };
-  };
-
-  const loadHomeworkStats = async () => {
-    // Get student's class first
-    const { data: enrollment } = await supabase
-      .from("student_enrollments")
-      .select("class_id")
-      .eq("student_id", profile?.id)
-      .maybeSingle();
-
-    if (!enrollment) return { pending: 0 };
-
-    const { data: homework } = await supabase
-      .from("homework")
-      .select(
-        `
-        id,
-        title,
-        due_date,
-        student_submissions!left(id)
-      `,
-      )
-      .eq("class_id", enrollment.class_id)
-      .gte("due_date", new Date().toISOString());
-
-    const pendingHomework =
-      homework?.filter((h) => !h.student_submissions?.length) || [];
-    return { pending: pendingHomework.length };
-  };
-
-  const loadExamStats = async () => {
-    const { data: enrollment } = await supabase
-      .from("student_enrollments")
-      .select("class_id")
-      .eq("student_id", profile?.id)
-      .maybeSingle();
-
-    if (!enrollment) return { upcoming: 0 };
-
-    const { data: exams } = await supabase
-      .from("exams")
-      .select("*")
-      .eq("class_id", enrollment.class_id)
-      .gte("exam_date", new Date().toISOString().split("T")[0])
-      .limit(5);
-
-    setUpcomingEvents(
-      exams?.map((exam) => ({
-        id: exam.id,
-        title: exam.title,
-        date: exam.exam_date,
-        type: "exam",
-        subject: exam.subject_id,
-      })) || [],
-    );
-
-    return { upcoming: exams?.length || 0 };
-  };
-
-  const loadMessageStats = async () => {
-    const { data } = await supabase
-      .from("messages")
-      .select("id")
-      .eq("recipient_id", profile?.id)
-      .eq("read", false);
-
-    return { unread: data?.length || 0 };
-  };
-
-  const loadAchievements = async () => {
-    const { data } = await supabase
-      .from("achievements")
-      .select("*")
-      .eq("student_id", profile?.id)
-      .order("achieved_at", { ascending: false })
-      .limit(3);
-
-    const totalPoints =
-      data?.reduce((sum, achievement) => sum + (achievement.points || 0), 0) ||
-      0;
-
-    return {
-      recent: data || [],
-      totalPoints,
-    };
-  };
-
-  const loadFeeStats = async () => {
-    const { data } = await supabase
-      .from("fees")
-      .select("amount")
-      .eq("student_id", profile?.id)
-      .eq("paid", false);
-
-    const pendingAmount = data?.reduce((sum, fee) => sum + fee.amount, 0) || 0;
-    return { pending: pendingAmount };
-  };
-
-  const loadDailyQuote = async () => {
-    const today = new Date().toISOString().split("T")[0];
-    const { data } = await supabase
-      .from("daily_quotes")
-      .select("quote_text, author")
-      .eq("date_featured", today)
-      .maybeSingle();
-
-    return data
-      ? `"${data.quote_text}" - ${data.author}`
-      : '"The future belongs to those who believe in the beauty of their dreams." - Eleanor Roosevelt';
   };
 
   const quickActions = [
@@ -347,7 +256,7 @@ const StudentDashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">
-            Welcome back, {profile?.full_name}!
+            Welcome back, {mockProfile.full_name}!
           </h1>
           <p className="text-muted-foreground">
             Here's what's happening with your studies today.
@@ -474,6 +383,11 @@ const StudentDashboard = () => {
                       <p className="text-sm text-muted-foreground">
                         {new Date(event.date).toLocaleDateString()}
                       </p>
+                      {event.subject && (
+                        <p className="text-xs text-muted-foreground">
+                          {event.subject}
+                        </p>
+                      )}
                     </div>
                     <Badge
                       variant={
