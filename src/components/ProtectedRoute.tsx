@@ -10,7 +10,10 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { user, profile, loading } = useAuth();
-  const [demoProfile, setDemoProfile] = useState<any>(null);
+  const [demoProfile, setDemoProfile] = useState<{
+    isDemo?: boolean;
+    role?: string;
+  } | null>(null);
 
   useEffect(() => {
     // Check for demo access
