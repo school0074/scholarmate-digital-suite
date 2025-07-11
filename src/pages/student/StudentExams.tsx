@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   Calendar,
@@ -52,80 +50,154 @@ interface ExamResult {
 }
 
 const StudentExams = () => {
-  const { profile } = useAuth();
   const { toast } = useToast();
+
+  // Mock student profile data
+  const mockProfile = {
+    id: "student-123",
+    full_name: "John Doe",
+  };
   const [upcomingExams, setUpcomingExams] = useState<Exam[]>([]);
   const [pastExams, setPastExams] = useState<Exam[]>([]);
   const [examResults, setExamResults] = useState<ExamResult[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (profile) {
-      loadExamsData();
-    }
-  }, [profile]);
+    loadMockExamsData();
+  }, []);
 
-  const loadExamsData = async () => {
+  const loadMockExamsData = async () => {
     try {
       setLoading(true);
 
-      // Get student's class
-      const { data: enrollment } = await supabase
-        .from("student_enrollments")
-        .select("class_id")
-        .eq("student_id", profile?.id)
-        .maybeSingle();
-
-      if (!enrollment) return;
-
-      // Get all exams for the class
-      const { data: exams, error } = await supabase
-        .from("exams")
-        .select(
-          `
-          id,
-          title,
-          description,
-          exam_date,
-          start_time,
-          duration_minutes,
-          total_marks,
-          subjects(name),
-          profiles(full_name)
-        `,
-        )
-        .eq("class_id", enrollment.class_id)
-        .order("exam_date", { ascending: true });
-
-      if (error) throw error;
-
-      const transformedExams =
-        exams?.map((exam) => ({
-          id: exam.id,
-          title: exam.title,
-          description: exam.description || "",
-          exam_date: exam.exam_date,
-          start_time: exam.start_time,
-          duration_minutes: exam.duration_minutes,
-          total_marks: exam.total_marks,
-          subject_name: exam.subjects?.name || "Unknown Subject",
-          teacher_name: exam.profiles?.full_name || "TBA",
-          room_number: "Room 101", // This would come from a room assignment table
-        })) || [];
+      // Simulate loading delay
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       const today = new Date();
-      const upcoming = transformedExams.filter(
-        (exam) => !isPast(new Date(exam.exam_date)),
-      );
-      const past = transformedExams.filter((exam) =>
-        isPast(new Date(exam.exam_date)),
-      );
 
-      setUpcomingExams(upcoming);
-      setPastExams(past);
+      // Generate mock upcoming exams
+      const mockUpcomingExams: Exam[] = [
+        {
+          id: "1",
+          title: "Mathematics Mid-Term Exam",
+          description: "Comprehensive exam covering Algebra and Trigonometry",
+          exam_date: format(addDays(today, 5), "yyyy-MM-dd"),
+          start_time: "09:00",
+          duration_minutes: 120,
+          total_marks: 100,
+          subject_name: "Mathematics",
+          teacher_name: "Dr. Smith",
+          room_number: "Room 101",
+        },
+        {
+          id: "2",
+          title: "Physics Lab Practical",
+          description: "Practical examination on optics and mechanics",
+          exam_date: format(addDays(today, 8), "yyyy-MM-dd"),
+          start_time: "14:00",
+          duration_minutes: 90,
+          total_marks: 50,
+          subject_name: "Physics",
+          teacher_name: "Prof. Johnson",
+          room_number: "Physics Lab",
+        },
+        {
+          id: "3",
+          title: "English Literature Essay",
+          description: "Essay writing on Shakespeare and modern poetry",
+          exam_date: format(addDays(today, 12), "yyyy-MM-dd"),
+          start_time: "10:00",
+          duration_minutes: 150,
+          total_marks: 80,
+          subject_name: "English Literature",
+          teacher_name: "Ms. Brown",
+          room_number: "Room 102",
+        },
+        {
+          id: "4",
+          title: "Chemistry Final Test",
+          description: "Final test on organic chemistry and reactions",
+          exam_date: format(addDays(today, 15), "yyyy-MM-dd"),
+          start_time: "11:30",
+          duration_minutes: 180,
+          total_marks: 120,
+          subject_name: "Chemistry",
+          teacher_name: "Dr. Wilson",
+          room_number: "Room 301",
+        },
+      ];
 
-      // Load exam results
-      await loadExamResults();
+      // Generate mock past exams
+      const mockPastExams: Exam[] = [
+        {
+          id: "5",
+          title: "History Quiz",
+          description: "Quiz on World War II and its aftermath",
+          exam_date: format(addDays(today, -10), "yyyy-MM-dd"),
+          start_time: "09:00",
+          duration_minutes: 60,
+          total_marks: 50,
+          subject_name: "History",
+          teacher_name: "Mr. Davis",
+          room_number: "Room 103",
+        },
+        {
+          id: "6",
+          title: "Biology Term Test",
+          description: "Test on cell biology and genetics",
+          exam_date: format(addDays(today, -20), "yyyy-MM-dd"),
+          start_time: "14:00",
+          duration_minutes: 90,
+          total_marks: 75,
+          subject_name: "Biology",
+          teacher_name: "Dr. Miller",
+          room_number: "Room 302",
+        },
+      ];
+
+      // Generate mock exam results
+      const mockExamResults: ExamResult[] = [
+        {
+          id: "1",
+          exam_id: "5",
+          marks_obtained: 42,
+          total_marks: 50,
+          percentage: 84,
+          grade: "A",
+          exam_title: "History Quiz",
+        },
+        {
+          id: "2",
+          exam_id: "6",
+          marks_obtained: 68,
+          total_marks: 75,
+          percentage: 91,
+          grade: "A+",
+          exam_title: "Biology Term Test",
+        },
+        {
+          id: "3",
+          exam_id: "",
+          marks_obtained: 78,
+          total_marks: 100,
+          percentage: 78,
+          grade: "B+",
+          exam_title: "Computer Science Quiz",
+        },
+        {
+          id: "4",
+          exam_id: "",
+          marks_obtained: 35,
+          total_marks: 50,
+          percentage: 70,
+          grade: "B+",
+          exam_title: "Geography Test",
+        },
+      ];
+
+      setUpcomingExams(mockUpcomingExams);
+      setPastExams(mockPastExams);
+      setExamResults(mockExamResults);
     } catch (error) {
       console.error("Error loading exams:", error);
       toast({
@@ -135,48 +207,6 @@ const StudentExams = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadExamResults = async () => {
-    try {
-      const { data: results } = await supabase
-        .from("marks")
-        .select(
-          `
-          id,
-          marks_obtained,
-          total_marks,
-          exam_type,
-          subject_id,
-          subjects(name)
-        `,
-        )
-        .eq("student_id", profile?.id)
-        .eq("exam_type", "exam");
-
-      const transformedResults =
-        results?.map((result) => {
-          const percentage =
-            result.total_marks > 0
-              ? (result.marks_obtained / result.total_marks) * 100
-              : 0;
-          const grade = getGrade(percentage);
-
-          return {
-            id: result.id,
-            exam_id: "",
-            marks_obtained: result.marks_obtained || 0,
-            total_marks: result.total_marks || 0,
-            percentage: Math.round(percentage),
-            grade,
-            exam_title: result.subjects?.name || "Unknown Subject",
-          };
-        }) || [];
-
-      setExamResults(transformedResults);
-    } catch (error) {
-      console.error("Error loading exam results:", error);
     }
   };
 
