@@ -25,6 +25,7 @@ import AdminInviteTeacher from "./pages/admin/AdminInviteTeacher";
 import DebugPage from "./pages/DebugPage";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
+import DemoStudentAccess from "./pages/DemoStudentAccess";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/demo" element={<DemoStudentAccess />} />
               <Route path="/debug" element={<DebugPage />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
               <Route
