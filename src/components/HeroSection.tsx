@@ -62,18 +62,22 @@ const HeroSection = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-            <Button variant="hero" size="xl" className="shadow-2xl">
-              Get Started Free
-              <ArrowRight className="h-5 w-5 ml-2" />
-            </Button>
-            <Button
-              variant="outline"
-              size="xl"
-              className="bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
-            >
-              <Play className="h-5 w-5 mr-2" />
-              Watch Demo
-            </Button>
+            <Link to="/auth">
+              <Button variant="hero" size="xl" className="shadow-2xl">
+                Get Started Free
+                <ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+            </Link>
+            <Link to="/demo">
+              <Button
+                variant="outline"
+                size="xl"
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+              >
+                <Play className="h-5 w-5 mr-2" />
+                Try Student Demo
+              </Button>
+            </Link>
           </div>
 
           {/* Trust indicators */}
