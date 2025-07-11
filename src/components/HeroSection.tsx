@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Play, ArrowRight, Users, BookOpen, Shield } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-image.jpg";
 
 const HeroSection = () => {
@@ -7,11 +8,11 @@ const HeroSection = () => {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background with gradient overlay */}
       <div className="absolute inset-0 bg-gradient-hero opacity-95"></div>
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-20"
         style={{ backgroundImage: `url(${heroImage})` }}
       ></div>
-      
+
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-20 w-32 h-32 bg-white/10 rounded-full blur-xl animate-pulse"></div>
@@ -24,7 +25,9 @@ const HeroSection = () => {
           {/* Badge */}
           <div className="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 mb-8">
             <Shield className="h-4 w-4 text-white mr-2" />
-            <span className="text-white text-sm font-medium">Trusted by 10,000+ Schools</span>
+            <span className="text-white text-sm font-medium">
+              Trusted by 10,000+ Schools
+            </span>
           </div>
 
           {/* Main heading */}
@@ -37,8 +40,8 @@ const HeroSection = () => {
 
           {/* Subheading */}
           <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
-            Complete digital ecosystem for students, teachers, and administrators. 
-            Streamline education with our all-in-one platform.
+            Complete digital ecosystem for students, teachers, and
+            administrators. Streamline education with our all-in-one platform.
           </p>
 
           {/* Stats */}
@@ -59,18 +62,22 @@ const HeroSection = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-            <Button variant="hero" size="xl" className="shadow-2xl">
-              Get Started Free
-              <ArrowRight className="h-5 w-5 ml-2" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="xl" 
-              className="bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
-            >
-              <Play className="h-5 w-5 mr-2" />
-              Watch Demo
-            </Button>
+            <Link to="/auth">
+              <Button variant="hero" size="xl" className="shadow-2xl">
+                Get Started Free
+                <ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+            </Link>
+            <Link to="/demo">
+              <Button
+                variant="outline"
+                size="xl"
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+              >
+                <Play className="h-5 w-5 mr-2" />
+                Try Student Demo
+              </Button>
+            </Link>
           </div>
 
           {/* Trust indicators */}

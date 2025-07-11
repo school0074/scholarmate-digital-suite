@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Calendar } from "@/components/ui/calendar";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   CalendarDays,
@@ -43,8 +41,13 @@ interface AttendanceStats {
 }
 
 const StudentAttendance = () => {
-  const { profile } = useAuth();
   const { toast } = useToast();
+
+  // Mock student profile data
+  const mockProfile = {
+    id: "student-123",
+    full_name: "John Doe",
+  };
   const [attendanceRecords, setAttendanceRecords] = useState<
     AttendanceRecord[]
   >([]);
@@ -60,38 +63,65 @@ const StudentAttendance = () => {
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
 
   useEffect(() => {
-    if (profile) {
-      loadAttendanceData();
-    }
-  }, [profile, selectedDate]);
+    loadMockAttendanceData();
+  }, [selectedDate]);
 
-  const loadAttendanceData = async () => {
+  const loadMockAttendanceData = async () => {
     try {
       setLoading(true);
+
+      // Simulate loading delay
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       const startDate = startOfMonth(selectedDate);
       const endDate = endOfMonth(selectedDate);
 
-      const { data: attendance, error } = await supabase
-        .from("attendance")
-        .select(
-          `
-          id,
-          date,
+      // Generate mock attendance data for the selected month
+      const mockAttendanceRecords: AttendanceRecord[] = [];
+      const daysInMonth = eachDayOfInterval({ start: startDate, end: endDate });
+
+      daysInMonth.forEach((day, index) => {
+        // Skip weekends
+        if (day.getDay() === 0 || day.getDay() === 6) return;
+
+        // Skip future dates
+        if (day > new Date()) return;
+
+        const dayOfWeek = day.getDay();
+        let status: "present" | "absent" | "late" | "excused";
+
+        // Generate realistic attendance patterns
+        const rand = Math.random();
+        if (rand < 0.85) {
+          status = "present";
+        } else if (rand < 0.92) {
+          status = "late";
+        } else if (rand < 0.98) {
+          status = "excused";
+        } else {
+          status = "absent";
+        }
+
+        mockAttendanceRecords.push({
+          id: `attendance-${index}`,
+          date: format(day, "yyyy-MM-dd"),
           status,
-          notes,
-          marked_by
-        `,
-        )
-        .eq("student_id", profile?.id)
-        .gte("date", format(startDate, "yyyy-MM-dd"))
-        .lte("date", format(endDate, "yyyy-MM-dd"))
-        .order("date", { ascending: false });
+          notes:
+            status === "excused"
+              ? "Medical appointment"
+              : status === "late"
+                ? "Traffic delay"
+                : undefined,
+          marked_by: "Mrs. Smith",
+        });
+      });
 
-      if (error) throw error;
+      mockAttendanceRecords.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+      );
 
-      setAttendanceRecords(attendance || []);
-      calculateStats(attendance || []);
+      setAttendanceRecords(mockAttendanceRecords);
+      calculateStats(mockAttendanceRecords);
     } catch (error) {
       console.error("Error loading attendance data:", error);
       toast({
@@ -166,7 +196,7 @@ const StudentAttendance = () => {
 
   const generateReport = () => {
     const reportData = {
-      student: profile?.full_name,
+      student: mockProfile.full_name,
       month: format(selectedDate, "MMMM yyyy"),
       stats,
       records: attendanceRecords,

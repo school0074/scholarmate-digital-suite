@@ -17,14 +17,23 @@ import StudentAttendance from "./pages/student/StudentAttendance";
 import StudentTimetable from "./pages/student/StudentTimetable";
 import StudentExams from "./pages/student/StudentExams";
 import StudentGrades from "./pages/student/StudentGrades";
+import StudentChat from "./pages/student/StudentChat";
+import StudentReminders from "./pages/student/StudentReminders";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import TeacherHomework from "./pages/teacher/TeacherHomework";
 import TeacherAttendance from "./pages/teacher/TeacherAttendance";
+import TeacherMaterials from "./pages/teacher/TeacherMaterials";
+import TeacherAnnouncements from "./pages/teacher/TeacherAnnouncements";
+import TeacherGrading from "./pages/teacher/TeacherGrading";
+import TeacherMessages from "./pages/teacher/TeacherMessages";
+import TeacherTimetable from "./pages/teacher/TeacherTimetable";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminInviteTeacher from "./pages/admin/AdminInviteTeacher";
 import DebugPage from "./pages/DebugPage";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
+import DemoStudentAccess from "./pages/DemoStudentAccess";
+import DemoTeacherAccess from "./pages/DemoTeacherAccess";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +48,8 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/demo" element={<DemoStudentAccess />} />
+              <Route path="/demo-teacher" element={<DemoTeacherAccess />} />
               <Route path="/debug" element={<DebugPage />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
               <Route
@@ -73,6 +84,12 @@ const App = () => (
                         />
                         <Route path="exams" element={<StudentExams />} />
                         <Route path="grades" element={<StudentGrades />} />
+                        <Route path="doubts" element={<StudentChat />} />
+                        <Route path="chat" element={<StudentChat />} />
+                        <Route
+                          path="reminders"
+                          element={<StudentReminders />}
+                        />
                         <Route
                           path="*"
                           element={
@@ -103,6 +120,20 @@ const App = () => (
                         <Route
                           path="attendance"
                           element={<TeacherAttendance />}
+                        />
+                        <Route
+                          path="materials"
+                          element={<TeacherMaterials />}
+                        />
+                        <Route
+                          path="announcements"
+                          element={<TeacherAnnouncements />}
+                        />
+                        <Route path="grading" element={<TeacherGrading />} />
+                        <Route path="messages" element={<TeacherMessages />} />
+                        <Route
+                          path="timetable"
+                          element={<TeacherTimetable />}
                         />
                         <Route
                           path="*"
