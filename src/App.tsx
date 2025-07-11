@@ -166,6 +166,16 @@ const App = () => (
                           path="invite-teacher"
                           element={<AdminInviteTeacher />}
                         />
+                        <Route path="users" element={<AdminUsers />} />
+                        <Route path="settings" element={<AdminSettings />} />
+                        <Route
+                          path="announcements"
+                          element={<AdminAnnouncements />}
+                        />
+                        <Route path="analytics" element={<AdminAnalytics />} />
+                        <Route path="classes" element={<AdminClasses />} />
+                        <Route path="fees" element={<AdminFees />} />
+                        <Route path="logs" element={<AdminLogs />} />
                         <Route
                           path="*"
                           element={
