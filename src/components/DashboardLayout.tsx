@@ -26,8 +26,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
         <div className="flex-1 flex flex-col">
           {/* Top Header */}
-          <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
-            <div className="flex items-center justify-between h-full px-6">
+          <header className="h-14 sm:h-16 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
+            <div className="flex items-center justify-between h-full px-4 sm:px-6">
               {/* Search */}
               <div className="flex items-center space-x-4 flex-1 max-w-md">
                 <div className="relative w-full">
