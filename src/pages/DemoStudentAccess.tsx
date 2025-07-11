@@ -245,6 +245,18 @@ const DemoStudentAccess = () => {
             >
               Grades
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/student/reminders")}
+            >
+              Reminders
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/student/doubts")}
+            >
+              Ask Doubts
+            </Button>
           </div>
         </div>
       </div>
