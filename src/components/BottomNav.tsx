@@ -62,8 +62,8 @@ const BottomNav = () => {
   if (navItems.length === 0) return null;
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border safe-area-inset-bottom">
-      <div className="flex items-center justify-around px-2 py-2 max-w-md mx-auto">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 bottom-nav-blur border-t border-border safe-area-inset-bottom mobile-tap-highlight">
+      <div className="flex items-center justify-around px-2 py-3 max-w-md mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.url);
