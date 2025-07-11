@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   Users,
@@ -49,8 +47,15 @@ interface RecentActivity {
 }
 
 const TeacherDashboard = () => {
-  const { profile } = useAuth();
   const { toast } = useToast();
+
+  // Mock teacher profile data
+  const mockProfile = {
+    id: "teacher-123",
+    full_name: "Prof. Sarah Johnson",
+    email: "sarah.johnson@school.edu",
+    role: "teacher" as const,
+  };
   const [stats, setStats] = useState<TeacherStats>({
     totalStudents: 0,
     totalClasses: 0,
@@ -64,100 +69,65 @@ const TeacherDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (profile) {
-      loadTeacherData();
-    }
-  }, [profile]);
+    loadMockTeacherData();
+  }, []);
 
-  const loadTeacherData = async () => {
+  const loadMockTeacherData = async () => {
     try {
       setLoading(true);
 
-      // Load teacher assignments and classes
-      const { data: assignments, error: assignmentError } = await supabase
-        .from("teacher_assignments")
-        .select(
-          `
-          id,
-          classes (
-            id,
-            name,
-            section,
-            student_enrollments (count)
-          ),
-          subjects (
-            name
-          )
-        `,
-        )
-        .eq("teacher_id", profile?.id);
+      // Simulate loading delay
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
-      if (assignmentError) throw assignmentError;
+      // Mock class data
+      const mockClasses: ClassInfo[] = [
+        {
+          id: "1",
+          name: "Grade 10",
+          section: "A",
+          studentCount: 32,
+          subjects: ["Mathematics", "Physics"],
+        },
+        {
+          id: "2",
+          name: "Grade 10",
+          section: "B",
+          studentCount: 28,
+          subjects: ["Mathematics"],
+        },
+        {
+          id: "3",
+          name: "Grade 9",
+          section: "A",
+          studentCount: 30,
+          subjects: ["Physics", "Science"],
+        },
+      ];
 
-      // Process class data
-      const classMap = new Map();
-      let totalStudents = 0;
+      setClasses(mockClasses);
 
-      assignments?.forEach((assignment) => {
-        const classId = assignment.classes?.id;
-        if (classId) {
-          if (!classMap.has(classId)) {
-            const studentCount =
-              assignment.classes?.student_enrollments?.[0]?.count || 0;
-            classMap.set(classId, {
-              id: classId,
-              name: assignment.classes?.name || "",
-              section: assignment.classes?.section || "",
-              studentCount,
-              subjects: [],
-            });
-            totalStudents += studentCount;
-          }
-          classMap.get(classId).subjects.push(assignment.subjects?.name || "");
-        }
-      });
+      const totalStudents = mockClasses.reduce(
+        (sum, cls) => sum + cls.studentCount,
+        0,
+      );
 
-      const classData = Array.from(classMap.values());
-      setClasses(classData);
-
-      // Load pending grading
-      const { data: submissions } = await supabase
-        .from("student_submissions")
-        .select(
-          `
-          id,
-          homework!inner (
-            assigned_by
-          )
-        `,
-        )
-        .eq("homework.assigned_by", profile?.id)
-        .eq("graded", false);
-
-      // Load unread messages
-      const { data: messages } = await supabase
-        .from("messages")
-        .select("id")
-        .eq("recipient_id", profile?.id)
-        .eq("read", false);
-
-      // Set stats
+      // Set mock stats
       setStats({
         totalStudents,
-        totalClasses: classData.length,
-        pendingGrading: submissions?.length || 0,
-        upcomingLessons: 8, // This would come from timetable
-        unreadMessages: messages?.length || 0,
-        completedAssignments: 25, // This would be calculated
+        totalClasses: mockClasses.length,
+        pendingGrading: 15,
+        upcomingLessons: 12,
+        unreadMessages: 3,
+        completedAssignments: 48,
       });
 
-      // Load recent activity
+      // Load mock recent activity
       setRecentActivity([
         {
           id: "1",
           type: "submission",
           title: "New Assignment Submission",
-          description: "Mathematics homework submitted by John Doe",
+          description: "Mathematics homework submitted by Emma Wilson",
           time: "5 minutes ago",
           priority: "medium",
         },
@@ -165,7 +135,7 @@ const TeacherDashboard = () => {
           id: "2",
           type: "homework",
           title: "Assignment Due Tomorrow",
-          description: "Science project due for Grade 7-A",
+          description: "Physics lab report due for Grade 10-A",
           time: "2 hours ago",
           priority: "high",
         },
@@ -173,7 +143,23 @@ const TeacherDashboard = () => {
           id: "3",
           type: "message",
           title: "Parent Inquiry",
-          description: "Message from Sarah Wilson's parent",
+          description: "Message from David Smith's parent about homework",
+          time: "3 hours ago",
+          priority: "medium",
+        },
+        {
+          id: "4",
+          type: "attendance",
+          title: "Attendance Marked",
+          description: "Attendance for Grade 9-A has been marked",
+          time: "1 day ago",
+          priority: "low",
+        },
+        {
+          id: "5",
+          type: "submission",
+          title: "Multiple Submissions",
+          description: "5 new submissions for Science project",
           time: "1 day ago",
           priority: "medium",
         },
@@ -283,7 +269,7 @@ const TeacherDashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">
-            Welcome back, {profile?.full_name}!
+            Welcome back, {mockProfile.full_name}!
           </h1>
           <p className="text-muted-foreground">
             Manage your classes and track student progress
