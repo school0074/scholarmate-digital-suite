@@ -81,10 +81,10 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadMockDashboardData();
+    loadDashboardData();
   }, []);
 
-  const loadMockDashboardData = async () => {
+  const loadDashboardData = async () => {
     try {
       setLoading(true);
 
