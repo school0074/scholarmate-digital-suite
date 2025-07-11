@@ -89,10 +89,10 @@ const TeacherAnnouncements = () => {
   };
 
   useEffect(() => {
-    loadMockData();
+    loadTeacherData();
   }, []);
 
-  const loadMockData = async () => {
+  const loadTeacherData = async () => {
     try {
       setLoading(true);
 
