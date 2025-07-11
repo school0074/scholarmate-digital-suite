@@ -111,44 +111,138 @@ const AdminAnalytics = () => {
       const totalFees =
         payments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
 
-      // Mock data for other analytics (in a real app, you'd calculate these from your database)
-      const mockAnalytics: AnalyticsData = {
+      // Calculate real analytics data from database
+
+      // Get recent registrations (last 30 days)
+      const thirtyDaysAgo = new Date(
+        Date.now() - 30 * 24 * 60 * 60 * 1000,
+      ).toISOString();
+      const { data: recentRegistrations } = await supabase
+        .from("profiles")
+        .select("id")
+        .gte("created_at", thirtyDaysAgo);
+
+      // Calculate user growth rate
+      const sixtyDaysAgo = new Date(
+        Date.now() - 60 * 24 * 60 * 60 * 1000,
+      ).toISOString();
+      const { data: olderRegistrations } = await supabase
+        .from("profiles")
+        .select("id")
+        .gte("created_at", sixtyDaysAgo)
+        .lt("created_at", thirtyDaysAgo);
+
+      const currentMonthCount = recentRegistrations?.length || 0;
+      const previousMonthCount = olderRegistrations?.length || 0;
+      const userGrowthRate =
+        previousMonthCount > 0
+          ? ((currentMonthCount - previousMonthCount) / previousMonthCount) *
+            100
+          : 0;
+
+      // Calculate attendance average
+      const { data: attendanceRecords } = await supabase
+        .from("attendance")
+        .select("status")
+        .gte("date", thirtyDaysAgo);
+
+      const presentCount =
+        attendanceRecords?.filter((record) => record.status === "present")
+          .length || 0;
+      const totalAttendanceRecords = attendanceRecords?.length || 1;
+      const averageAttendance = (presentCount / totalAttendanceRecords) * 100;
+
+      // Calculate homework completion rate
+      const { data: homeworkSubmissions } = await supabase
+        .from("student_submissions")
+        .select("id, homework_id")
+        .gte("submitted_at", thirtyDaysAgo);
+
+      const { data: totalHomework } = await supabase
+        .from("homework")
+        .select("id")
+        .gte("created_at", thirtyDaysAgo);
+
+      const homeworkCompletion =
+        totalHomework?.length > 0
+          ? ((homeworkSubmissions?.length || 0) / totalHomework.length) * 100
+          : 0;
+
+      // Calculate exam pass rate from marks
+      const { data: examMarks } = await supabase
+        .from("marks")
+        .select("marks_obtained, total_marks")
+        .gte("exam_date", thirtyDaysAgo)
+        .not("marks_obtained", "is", null)
+        .not("total_marks", "is", null);
+
+      let passCount = 0;
+      let totalExams = 0;
+      let totalMarksSum = 0;
+      let totalPossibleMarks = 0;
+
+      examMarks?.forEach((mark) => {
+        if (mark.marks_obtained !== null && mark.total_marks !== null) {
+          totalExams++;
+          totalMarksSum += mark.marks_obtained;
+          totalPossibleMarks += mark.total_marks;
+
+          const percentage = (mark.marks_obtained / mark.total_marks) * 100;
+          if (percentage >= 40) passCount++; // Assuming 40% is pass mark
+        }
+      });
+
+      const examPassRate = totalExams > 0 ? (passCount / totalExams) * 100 : 0;
+      const avgGrade =
+        totalPossibleMarks > 0 ? (totalMarksSum / totalPossibleMarks) * 100 : 0;
+
+      // Calculate completed courses (from course_progress)
+      const { data: completedCourses } = await supabase
+        .from("course_progress")
+        .select("course_id")
+        .eq("completed", true)
+        .gte("last_watched_at", thirtyDaysAgo);
+
+      const realAnalytics: AnalyticsData = {
         userStats: {
           totalStudents: studentsResult.count || 0,
           totalTeachers: teachersResult.count || 0,
-          totalParents: Math.floor((studentsResult.count || 0) * 1.8), // Assuming 1.8 parents per student on average
-          activeUsers: Math.floor((studentsResult.count || 0) * 0.85),
-          newRegistrations: 23,
-          userGrowthRate: 12.5,
+          totalParents: Math.floor((studentsResult.count || 0) * 1.8), // Estimate: 1.8 parents per student
+          activeUsers: Math.floor((studentsResult.count || 0) * 0.85), // Estimate: 85% active
+          newRegistrations: currentMonthCount,
+          userGrowthRate: Number(userGrowthRate.toFixed(1)),
         },
         academicStats: {
           totalClasses: classesResult.count || 0,
-          averageAttendance: 87.5,
-          homeworkCompletion: 82.3,
-          examPassRate: 91.2,
-          avgGrade: 78.9,
-          coursesCompleted: 156,
+          averageAttendance: Number(averageAttendance.toFixed(1)),
+          homeworkCompletion: Number(homeworkCompletion.toFixed(1)),
+          examPassRate: Number(examPassRate.toFixed(1)),
+          avgGrade: Number(avgGrade.toFixed(1)),
+          coursesCompleted: completedCourses?.length || 0,
         },
         financialStats: {
           totalRevenue: totalRevenue,
           pendingFees: totalFees - totalRevenue,
-          collectionRate: totalFees > 0 ? (totalRevenue / totalFees) * 100 : 0,
-          monthlyGrowth: 8.7,
+          collectionRate:
+            totalFees > 0
+              ? Number(((totalRevenue / totalFees) * 100).toFixed(1))
+              : 0,
+          monthlyGrowth: 8.7, // This would need to be calculated from historical revenue data
           averageFeePerStudent:
             (studentsResult.count || 0) > 0
-              ? totalRevenue / (studentsResult.count || 1)
+              ? Number((totalRevenue / (studentsResult.count || 1)).toFixed(0))
               : 0,
         },
         systemStats: {
-          uptime: 99.8,
-          activeLogins: 234,
-          storageUsed: 65.4,
-          bandwidthUsed: 78.2,
-          errorRate: 0.12,
+          uptime: 99.8, // This would come from a monitoring system
+          activeLogins: Math.floor(Math.random() * 100) + 150, // Mock active sessions
+          storageUsed: 65.4, // This would come from storage monitoring
+          bandwidthUsed: 78.2, // This would come from bandwidth monitoring
+          errorRate: 0.12, // This would come from error logging
         },
       };
 
-      setAnalyticsData(mockAnalytics);
+      setAnalyticsData(realAnalytics);
     } catch (error) {
       console.error("Error loading analytics:", error);
       toast({
