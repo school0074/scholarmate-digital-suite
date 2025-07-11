@@ -112,6 +112,7 @@ const AdminFees = () => {
   useEffect(() => {
     loadFees();
     loadFeeTypes();
+    loadStudents();
   }, []);
 
   const loadFees = async () => {
