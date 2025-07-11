@@ -83,6 +83,7 @@ interface FeeType {
 const AdminFees = () => {
   const [fees, setFees] = useState<Fee[]>([]);
   const [feeTypes, setFeeTypes] = useState<FeeType[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
