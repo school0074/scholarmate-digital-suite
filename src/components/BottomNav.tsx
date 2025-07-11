@@ -73,10 +73,10 @@ const BottomNav = () => {
               key={item.title}
               to={item.url}
               className={cn(
-                "flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 touch-target min-w-[60px]",
+                "relative flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 touch-target min-w-[60px] active:scale-95",
                 active
-                  ? "bg-primary/10 text-primary scale-105"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                  ? "bg-primary/15 text-primary shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/30 active:bg-muted/50",
               )}
             >
               <Icon
