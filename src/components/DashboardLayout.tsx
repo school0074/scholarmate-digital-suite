@@ -40,11 +40,15 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               </div>
 
               {/* Right Side Actions */}
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 sm:space-x-4">
                 {/* Notifications */}
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative h-9 w-9 sm:h-10 sm:w-10"
+                >
+                  <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="absolute -top-1 -right-1 h-3 w-3 sm:h-4 sm:w-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
                     3
                   </span>
                 </Button>
