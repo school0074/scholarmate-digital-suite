@@ -25,9 +25,9 @@ const DashboardPage = () => {
     case "student":
       return <Navigate to="/student/dashboard" replace />;
     case "teacher":
-      return <TeacherDashboard />;
+      return <Navigate to="/teacher/dashboard" replace />;
     case "admin":
-      return <AdminDashboard />;
+      return <Navigate to="/admin/dashboard" replace />;
     default:
       return <Navigate to="/auth" replace />;
   }
