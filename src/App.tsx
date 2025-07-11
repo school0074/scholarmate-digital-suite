@@ -20,6 +20,8 @@ import StudentGrades from "./pages/student/StudentGrades";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import TeacherHomework from "./pages/teacher/TeacherHomework";
 import TeacherAttendance from "./pages/teacher/TeacherAttendance";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminInviteTeacher from "./pages/admin/AdminInviteTeacher";
 import DebugPage from "./pages/DebugPage";
 import NotFound from "./pages/NotFound";
 
@@ -118,7 +120,21 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={["admin"]}>
                     <DashboardLayout>
-                      <div className="p-6">Admin Features Coming Soon...</div>
+                      <Routes>
+                        <Route path="dashboard" element={<AdminDashboard />} />
+                        <Route
+                          path="invite-teacher"
+                          element={<AdminInviteTeacher />}
+                        />
+                        <Route
+                          path="*"
+                          element={
+                            <div className="p-6">
+                              More admin features coming soon...
+                            </div>
+                          }
+                        />
+                      </Routes>
                     </DashboardLayout>
                   </ProtectedRoute>
                 }
