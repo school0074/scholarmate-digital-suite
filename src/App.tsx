@@ -15,6 +15,8 @@ import StudentHomework from "./pages/student/StudentHomework";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentAttendance from "./pages/student/StudentAttendance";
 import StudentTimetable from "./pages/student/StudentTimetable";
+import StudentExams from "./pages/student/StudentExams";
+import StudentGrades from "./pages/student/StudentGrades";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -60,6 +62,8 @@ const App = () => (
                           path="timetable"
                           element={<StudentTimetable />}
                         />
+                        <Route path="exams" element={<StudentExams />} />
+                        <Route path="grades" element={<StudentGrades />} />
                         <Route
                           path="*"
                           element={
