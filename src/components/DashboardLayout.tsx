@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { profile, signOut } = useAuth();
@@ -41,6 +42,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
               {/* Right Side Actions */}
               <div className="flex items-center space-x-2 sm:space-x-4">
+                {/* Theme Toggle */}
+                <div className="hidden sm:block">
+                  <ThemeToggle />
+                </div>
+
                 {/* Notifications */}
                 <Button
                   variant="ghost"
@@ -104,7 +110,9 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-auto pb-20 lg:pb-0">{children}</main>
+          <main className="flex-1 overflow-auto pb-20 lg:pb-0 p-4 sm:p-6">
+            {children}
+          </main>
         </div>
 
         {/* Bottom Navigation for Mobile */}

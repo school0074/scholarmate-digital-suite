@@ -1,3 +1,4 @@
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +18,10 @@ import StudentAttendance from "./pages/student/StudentAttendance";
 import StudentTimetable from "./pages/student/StudentTimetable";
 import StudentExams from "./pages/student/StudentExams";
 import StudentGrades from "./pages/student/StudentGrades";
+import StudentMessages from "./pages/student/StudentMessages";
+import StudentLibrary from "./pages/student/StudentLibrary";
+import StudentFees from "./pages/student/StudentFees";
+import StudentQuiz from "./pages/student/StudentQuiz";
 import StudentChat from "./pages/student/StudentChat";
 import StudentReminders from "./pages/student/StudentReminders";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
@@ -87,6 +92,11 @@ const App = () => (
                         />
                         <Route path="exams" element={<StudentExams />} />
                         <Route path="grades" element={<StudentGrades />} />
+                        <Route path="messages" element={<StudentMessages />} />
+                        <Route path="library" element={<StudentLibrary />} />
+                        <Route path="fees" element={<StudentFees />} />
+                        <Route path="quiz" element={<StudentQuiz />} />
+                        <Route path="quizzes" element={<StudentQuiz />} />
                         <Route path="doubts" element={<StudentChat />} />
                         <Route path="chat" element={<StudentChat />} />
                         <Route

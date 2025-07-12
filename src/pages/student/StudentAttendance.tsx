@@ -23,6 +23,8 @@ import {
   endOfMonth,
   eachDayOfInterval,
 } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AttendanceRecord {
   id: string;
@@ -42,12 +44,7 @@ interface AttendanceStats {
 
 const StudentAttendance = () => {
   const { toast } = useToast();
-
-  // Mock student profile data
-  const mockProfile = {
-    id: "student-123",
-    full_name: "John Doe",
-  };
+  const { user, profile } = useAuth();
   const [attendanceRecords, setAttendanceRecords] = useState<
     AttendanceRecord[]
   >([]);
@@ -63,65 +60,53 @@ const StudentAttendance = () => {
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
 
   useEffect(() => {
-    loadMockAttendanceData();
-  }, [selectedDate]);
+    if (user && profile) {
+      loadAttendanceData();
+    }
+  }, [selectedDate, user, profile]);
 
-  const loadMockAttendanceData = async () => {
+  const loadAttendanceData = async () => {
     try {
       setLoading(true);
 
-      // Simulate loading delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      if (!user) return;
 
       const startDate = startOfMonth(selectedDate);
       const endDate = endOfMonth(selectedDate);
 
-      // Generate mock attendance data for the selected month
-      const mockAttendanceRecords: AttendanceRecord[] = [];
-      const daysInMonth = eachDayOfInterval({ start: startDate, end: endDate });
-
-      daysInMonth.forEach((day, index) => {
-        // Skip weekends
-        if (day.getDay() === 0 || day.getDay() === 6) return;
-
-        // Skip future dates
-        if (day > new Date()) return;
-
-        const dayOfWeek = day.getDay();
-        let status: "present" | "absent" | "late" | "excused";
-
-        // Generate realistic attendance patterns
-        const rand = Math.random();
-        if (rand < 0.85) {
-          status = "present";
-        } else if (rand < 0.92) {
-          status = "late";
-        } else if (rand < 0.98) {
-          status = "excused";
-        } else {
-          status = "absent";
-        }
-
-        mockAttendanceRecords.push({
-          id: `attendance-${index}`,
-          date: format(day, "yyyy-MM-dd"),
+      // Load real attendance data from database
+      const { data: attendanceData, error } = await supabase
+        .from("attendance")
+        .select(
+          `
+          id,
+          date,
           status,
-          notes:
-            status === "excused"
-              ? "Medical appointment"
-              : status === "late"
-                ? "Traffic delay"
-                : undefined,
-          marked_by: "Mrs. Smith",
-        });
-      });
+          notes,
+          profiles!attendance_teacher_id_fkey(full_name)
+        `,
+        )
+        .eq("student_id", user.id)
+        .gte("date", format(startDate, "yyyy-MM-dd"))
+        .lte("date", format(endDate, "yyyy-MM-dd"))
+        .order("date", { ascending: false });
 
-      mockAttendanceRecords.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-      );
+      if (error) {
+        console.error("Error loading attendance:", error);
+        throw error;
+      }
 
-      setAttendanceRecords(mockAttendanceRecords);
-      calculateStats(mockAttendanceRecords);
+      const formattedRecords: AttendanceRecord[] =
+        attendanceData?.map((record: any) => ({
+          id: record.id,
+          date: record.date,
+          status: record.status,
+          notes: record.notes,
+          marked_by: record.profiles?.full_name || "Teacher",
+        })) || [];
+
+      setAttendanceRecords(formattedRecords);
+      calculateStats(formattedRecords);
     } catch (error) {
       console.error("Error loading attendance data:", error);
       toast({
@@ -196,7 +181,7 @@ const StudentAttendance = () => {
 
   const generateReport = () => {
     const reportData = {
-      student: mockProfile.full_name,
+      student: profile?.full_name,
       month: format(selectedDate, "MMMM yyyy"),
       stats,
       records: attendanceRecords,

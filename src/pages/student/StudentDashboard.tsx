@@ -28,6 +28,7 @@ import {
   User,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardStats {
   attendancePercentage: number;
@@ -57,14 +58,7 @@ interface Achievement {
 
 const StudentDashboard = () => {
   const { toast } = useToast();
-
-  // Mock student profile data
-  const mockProfile = {
-    id: "student-123",
-    full_name: "John Doe",
-    email: "john.doe@student.school.com",
-    avatar_url: null,
-  };
+  const { user, profile } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     attendancePercentage: 0,
     pendingHomework: 0,
@@ -336,16 +330,16 @@ const StudentDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">
-            Welcome back, {mockProfile.full_name}!
+          <h1 className="text-2xl sm:text-3xl font-bold">
+            Welcome back, {profile?.full_name || "Student"}!
           </h1>
           <p className="text-muted-foreground">
             Here's what's happening with your studies today.
           </p>
         </div>
-        <Badge variant="secondary" className="text-sm">
+        <Badge variant="secondary" className="text-sm w-fit">
           <Star className="h-4 w-4 mr-1" />
           {stats.totalPoints} Points
         </Badge>
@@ -424,17 +418,19 @@ const StudentDashboard = () => {
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
             {quickActions.map((action) => (
               <Link key={action.title} to={action.href}>
                 <Button
                   variant="outline"
-                  className="h-20 w-full flex flex-col items-center justify-center space-y-2 hover:bg-muted/50"
+                  className="h-16 sm:h-20 w-full flex flex-col items-center justify-center space-y-1 sm:space-y-2 hover:bg-muted/50 p-2"
                 >
-                  <div className={`p-2 rounded-lg text-white ${action.color}`}>
+                  <div
+                    className={`p-1.5 sm:p-2 rounded-lg text-white ${action.color}`}
+                  >
                     {action.icon}
                   </div>
-                  <span className="text-xs font-medium text-center">
+                  <span className="text-xs font-medium text-center leading-tight">
                     {action.title}
                   </span>
                 </Button>

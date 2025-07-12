@@ -21,6 +21,8 @@ import {
   School,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface StudentData {
   rollNumber: string;
@@ -39,16 +41,7 @@ interface StudentData {
 
 const StudentIDCard = () => {
   const { toast } = useToast();
-
-  // Mock student profile data
-  const mockProfile = {
-    id: "student-123",
-    full_name: "John Doe",
-    email: "john.doe@student.school.com",
-    phone: "+1 (555) 123-4567",
-    address: "123 Main Street, Anytown, State 12345",
-    avatar_url: null,
-  };
+  const { user, profile } = useAuth();
   const cardRef = useRef<HTMLDivElement>(null);
   const [studentData, setStudentData] = useState<StudentData>({
     rollNumber: "",
@@ -69,40 +62,73 @@ const StudentIDCard = () => {
   const [showBack, setShowBack] = useState(false);
 
   useEffect(() => {
-    loadMockStudentData();
-    generateQRCode();
-  }, []);
+    if (user && profile) {
+      loadStudentData();
+      generateQRCode();
+    }
+  }, [user, profile]);
 
-  const loadMockStudentData = async () => {
+  const loadStudentData = async () => {
     try {
       setLoading(true);
 
-      // Simulate loading delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      if (!user) return;
+
+      // Load student's enrollment information
+      const { data: enrollment } = await supabase
+        .from("student_enrollments")
+        .select(
+          `
+          roll_number,
+          classes(
+            name,
+            section,
+            grade
+          )
+        `,
+        )
+        .eq("student_id", user.id)
+        .single();
+
+      // Load additional student profile data
+      const { data: studentProfile } = await supabase
+        .from("student_profiles")
+        .select(
+          "blood_group, emergency_contact, parent_name, parent_phone, address",
+        )
+        .eq("student_id", user.id)
+        .single();
 
       const currentYear = new Date().getFullYear();
       const nextYear = currentYear + 1;
 
+      const className = enrollment?.classes?.name || "Not Assigned";
+      const section = enrollment?.classes?.section || "";
+      const rollNumber =
+        enrollment?.roll_number ||
+        `${currentYear}-${user.id.substring(0, 6).toUpperCase()}`;
+
       setStudentData({
-        rollNumber: "2024-STU-001",
-        className: "Grade 10",
-        section: "A",
+        rollNumber,
+        className,
+        section,
         academicYear: `${currentYear}-${nextYear}`,
-        bloodGroup: "O+",
-        emergencyContact: mockProfile.phone,
-        address: mockProfile.address,
+        bloodGroup: studentProfile?.blood_group || "Not Specified",
+        emergencyContact:
+          studentProfile?.emergency_contact || profile?.phone || "Not Provided",
+        address: studentProfile?.address || "Address not provided",
         qrCodeData: JSON.stringify({
-          studentId: mockProfile.id,
-          name: mockProfile.full_name,
-          rollNumber: "2024-STU-001",
-          class: "Grade 10 A",
+          studentId: user.id,
+          name: profile?.full_name,
+          rollNumber,
+          class: `${className} ${section}`,
           validUntil: `${nextYear}-06-30`,
           issued: new Date().toISOString(),
         }),
         validUntil: `${nextYear}-06-30`,
         schoolName: "ScholarMate Academy",
-        parentName: "Jane Doe",
-        parentPhone: "+1 (555) 987-6543",
+        parentName: studentProfile?.parent_name || "Not Provided",
+        parentPhone: studentProfile?.parent_phone || "Not Provided",
       });
     } catch (error) {
       console.error("Error loading student data:", error);
@@ -120,8 +146,8 @@ const StudentIDCard = () => {
     try {
       // Create QR code data with student information
       const qrData = {
-        studentId: mockProfile.id,
-        name: mockProfile.full_name,
+        studentId: user?.id,
+        name: profile?.full_name,
         rollNumber: studentData.rollNumber,
         class: `${studentData.className} ${studentData.section}`,
         validUntil: studentData.validUntil,
@@ -170,7 +196,7 @@ const StudentIDCard = () => {
       try {
         await navigator.share({
           title: "My Student ID Card",
-          text: `${mockProfile?.full_name} - ${studentData.rollNumber}`,
+          text: `${profile?.full_name} - ${studentData.rollNumber}`,
           url: window.location.href,
         });
       } catch (error) {
@@ -257,14 +283,14 @@ const StudentIDCard = () => {
               <CardContent className="space-y-3">
                 <div className="flex items-center space-x-3">
                   <Avatar className="h-16 w-16 border-3 border-white/30">
-                    <AvatarImage src={mockProfile.avatar_url || ""} />
+                    <AvatarImage src={profile?.avatar_url || ""} />
                     <AvatarFallback className="bg-white/20 text-white text-lg">
                       <User className="h-8 w-8" />
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <h3 className="text-lg font-bold leading-tight">
-                      {mockProfile.full_name}
+                      {profile?.full_name || "Student Name"}
                     </h3>
                     <p className="text-sm opacity-90">
                       Roll No: {studentData.rollNumber}

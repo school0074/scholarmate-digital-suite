@@ -3,6 +3,7 @@ import { GraduationCap, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -60,6 +61,7 @@ const Navbar = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden lg:flex items-center space-x-3 xl:space-x-4">
+            <ThemeToggle />
             {user ? (
               <>
                 <span className="text-sm text-muted-foreground">
@@ -86,7 +88,8 @@ const Navbar = () => {
           </div>
 
           {/* Mobile/Tablet Menu Button */}
-          <div className="lg:hidden">
+          <div className="lg:hidden flex items-center space-x-2">
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"

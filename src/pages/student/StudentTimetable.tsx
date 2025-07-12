@@ -99,207 +99,61 @@ const StudentTimetable = () => {
     return () => clearInterval(interval);
   }, [timetableData]);
 
-  const loadMockTimetableData = async () => {
+  const loadTimetableData = async () => {
     try {
       setLoading(true);
 
-      // Simulate loading delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      if (!user) return;
 
-      // Generate mock timetable data
-      const mockTimetableData: TimetableEntry[] = [
-        // Monday
-        {
-          id: "1",
-          day_of_week: 1,
-          start_time: "09:00",
-          end_time: "09:45",
-          subject_name: "Mathematics",
-          teacher_name: "Dr. Smith",
-          room_number: "101",
-        },
-        {
-          id: "2",
-          day_of_week: 1,
-          start_time: "10:00",
-          end_time: "10:45",
-          subject_name: "Physics",
-          teacher_name: "Prof. Johnson",
-          room_number: "205",
-        },
-        {
-          id: "3",
-          day_of_week: 1,
-          start_time: "11:00",
-          end_time: "11:45",
-          subject_name: "English",
-          teacher_name: "Ms. Brown",
-          room_number: "102",
-        },
-        {
-          id: "4",
-          day_of_week: 1,
-          start_time: "14:00",
-          end_time: "14:45",
-          subject_name: "Chemistry",
-          teacher_name: "Dr. Wilson",
-          room_number: "301",
-        },
+      // Get student's class enrollment
+      const { data: enrollment } = await supabase
+        .from("student_enrollments")
+        .select("class_id")
+        .eq("student_id", user.id)
+        .single();
 
-        // Tuesday
-        {
-          id: "5",
-          day_of_week: 2,
-          start_time: "09:00",
-          end_time: "09:45",
-          subject_name: "History",
-          teacher_name: "Mr. Davis",
-          room_number: "103",
-        },
-        {
-          id: "6",
-          day_of_week: 2,
-          start_time: "10:00",
-          end_time: "10:45",
-          subject_name: "Mathematics",
-          teacher_name: "Dr. Smith",
-          room_number: "101",
-        },
-        {
-          id: "7",
-          day_of_week: 2,
-          start_time: "11:00",
-          end_time: "11:45",
-          subject_name: "Biology",
-          teacher_name: "Dr. Miller",
-          room_number: "302",
-        },
-        {
-          id: "8",
-          day_of_week: 2,
-          start_time: "14:00",
-          end_time: "14:45",
-          subject_name: "Geography",
-          teacher_name: "Ms. Taylor",
-          room_number: "104",
-        },
+      if (!enrollment || !enrollment.class_id) {
+        setTimetableData([]);
+        return;
+      }
 
-        // Wednesday
-        {
-          id: "9",
-          day_of_week: 3,
-          start_time: "09:00",
-          end_time: "09:45",
-          subject_name: "Physics",
-          teacher_name: "Prof. Johnson",
-          room_number: "205",
-        },
-        {
-          id: "10",
-          day_of_week: 3,
-          start_time: "10:00",
-          end_time: "10:45",
-          subject_name: "Computer Science",
-          teacher_name: "Mr. Anderson",
-          room_number: "Lab-1",
-        },
-        {
-          id: "11",
-          day_of_week: 3,
-          start_time: "11:00",
-          end_time: "11:45",
-          subject_name: "Mathematics",
-          teacher_name: "Dr. Smith",
-          room_number: "101",
-        },
-        {
-          id: "12",
-          day_of_week: 3,
-          start_time: "14:00",
-          end_time: "14:45",
-          subject_name: "Art",
-          teacher_name: "Ms. Garcia",
-          room_number: "Art Room",
-        },
+      // Load timetable for student's class
+      const { data: timetableData, error } = await supabase
+        .from("timetable")
+        .select(
+          `
+          id,
+          day_of_week,
+          start_time,
+          end_time,
+          room_number,
+          subjects(name),
+          profiles(full_name)
+        `,
+        )
+        .eq("class_id", enrollment.class_id)
+        .order("day_of_week")
+        .order("start_time");
 
-        // Thursday
-        {
-          id: "13",
-          day_of_week: 4,
-          start_time: "09:00",
-          end_time: "09:45",
-          subject_name: "English",
-          teacher_name: "Ms. Brown",
-          room_number: "102",
-        },
-        {
-          id: "14",
-          day_of_week: 4,
-          start_time: "10:00",
-          end_time: "10:45",
-          subject_name: "Chemistry",
-          teacher_name: "Dr. Wilson",
-          room_number: "301",
-        },
-        {
-          id: "15",
-          day_of_week: 4,
-          start_time: "11:00",
-          end_time: "11:45",
-          subject_name: "Physical Education",
-          teacher_name: "Coach Martinez",
-          room_number: "Gym",
-        },
-        {
-          id: "16",
-          day_of_week: 4,
-          start_time: "14:00",
-          end_time: "14:45",
-          subject_name: "Music",
-          teacher_name: "Mr. Rodriguez",
-          room_number: "Music Room",
-        },
+      if (error) {
+        console.error("Error loading timetable:", error);
+        throw error;
+      }
 
-        // Friday
-        {
-          id: "17",
-          day_of_week: 5,
-          start_time: "09:00",
-          end_time: "09:45",
-          subject_name: "Biology",
-          teacher_name: "Dr. Miller",
-          room_number: "302",
-        },
-        {
-          id: "18",
-          day_of_week: 5,
-          start_time: "10:00",
-          end_time: "10:45",
-          subject_name: "History",
-          teacher_name: "Mr. Davis",
-          room_number: "103",
-        },
-        {
-          id: "19",
-          day_of_week: 5,
-          start_time: "11:00",
-          end_time: "11:45",
-          subject_name: "Literature",
-          teacher_name: "Ms. Thompson",
-          room_number: "105",
-        },
-        {
-          id: "20",
-          day_of_week: 5,
-          start_time: "14:00",
-          end_time: "14:45",
-          subject_name: "Study Hall",
-          teacher_name: "Various",
-          room_number: "Library",
-        },
-      ];
+      const formattedTimetable: TimetableEntry[] =
+        timetableData?.map((entry: any) => ({
+          id: entry.id,
+          day_of_week: entry.day_of_week,
+          start_time: entry.start_time,
+          end_time: entry.end_time,
+          subject_name: entry.subjects?.name || "Unknown Subject",
+          teacher_name: entry.profiles?.full_name || "TBA",
+          room_number: entry.room_number || "TBA",
+          subject_id: entry.subject_id,
+          teacher_id: entry.teacher_id,
+        })) || [];
 
-      setTimetableData(mockTimetableData);
+      setTimetableData(formattedTimetable);
     } catch (error) {
       console.error("Error loading timetable:", error);
       toast({

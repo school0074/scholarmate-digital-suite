@@ -29,6 +29,8 @@ import {
   Upload,
 } from "lucide-react";
 import { format, isAfter, isBefore } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Class {
   id: string;
@@ -58,12 +60,7 @@ interface Homework {
 
 const TeacherHomework = () => {
   const { toast } = useToast();
-
-  // Mock teacher profile data
-  const mockProfile = {
-    id: "teacher-123",
-    full_name: "Prof. Sarah Johnson",
-  };
+  const { user, profile } = useAuth();
   const [classes, setClasses] = useState<Class[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [homework, setHomework] = useState<Homework[]>([]);
@@ -80,62 +77,71 @@ const TeacherHomework = () => {
   });
 
   useEffect(() => {
-    loadMockTeacherData();
-  }, []);
+    if (user && profile) {
+      loadTeacherData();
+    }
+  }, [user, profile]);
 
-  const loadMockTeacherData = async () => {
+  const loadTeacherData = async () => {
     try {
       setLoading(true);
 
-      // Simulate loading delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      if (!user) return;
 
-      // Mock classes data
-      const mockClasses: Class[] = [
-        {
-          id: "1",
-          name: "Grade 10",
-          section: "A",
-          studentCount: 32,
-        },
-        {
-          id: "2",
-          name: "Grade 10",
-          section: "B",
-          studentCount: 28,
-        },
-        {
-          id: "3",
-          name: "Grade 9",
-          section: "A",
-          studentCount: 30,
-        },
-      ];
+      // Load teacher's classes from database
+      const { data: teacherClasses, error: classesError } = await supabase
+        .from("classes")
+        .select(
+          `
+          id,
+          name,
+          section,
+          student_enrollments(count)
+        `,
+        )
+        .eq("teacher_id", user.id);
 
-      // Mock subjects data
-      const mockSubjects: Subject[] = [
-        {
-          id: "1",
-          name: "Mathematics",
-          code: "MATH101",
-        },
-        {
-          id: "2",
-          name: "Physics",
-          code: "PHY101",
-        },
-        {
-          id: "3",
-          name: "Science",
-          code: "SCI101",
-        },
-      ];
+      if (classesError) {
+        console.error("Error loading classes:", classesError);
+      }
 
-      setClasses(mockClasses);
-      setSubjects(mockSubjects);
+      // Load subjects that the teacher teaches
+      const { data: teacherSubjects, error: subjectsError } = await supabase
+        .from("subjects")
+        .select("id, name, code")
+        .in(
+          "id",
+          await supabase
+            .from("class_subjects")
+            .select("subject_id")
+            .eq("teacher_id", user.id)
+            .then((res) => res.data?.map((cs) => cs.subject_id) || []),
+        );
 
-      // Load mock homework data
-      loadMockHomework();
+      if (subjectsError) {
+        console.error("Error loading subjects:", subjectsError);
+      }
+
+      const formattedClasses: Class[] =
+        teacherClasses?.map((cls: any) => ({
+          id: cls.id,
+          name: cls.name,
+          section: cls.section,
+          studentCount: cls.student_enrollments?.[0]?.count || 0,
+        })) || [];
+
+      const formattedSubjects: Subject[] =
+        teacherSubjects?.map((subj: any) => ({
+          id: subj.id,
+          name: subj.name,
+          code: subj.code,
+        })) || [];
+
+      setClasses(formattedClasses);
+      setSubjects(formattedSubjects);
+
+      // Load teacher's homework assignments
+      loadHomework();
     } catch (error) {
       console.error("Error loading teacher data:", error);
       toast({
@@ -148,74 +154,62 @@ const TeacherHomework = () => {
     }
   };
 
-  const loadMockHomework = () => {
-    const mockHomework: Homework[] = [
-      {
-        id: "1",
-        title: "Quadratic Equations Practice",
-        description:
-          "Complete exercises 1-15 from Chapter 4. Show all working steps.",
-        due_date: "2024-12-20",
-        subject_name: "Mathematics",
-        class_name: "Grade 10",
-        class_section: "A",
-        submissionCount: 18,
-        totalStudents: 32,
-        created_at: "2024-12-10T09:00:00Z",
-      },
-      {
-        id: "2",
-        title: "Newton's Laws Lab Report",
-        description:
-          "Write a detailed lab report on the Newton's laws experiment conducted in class.",
-        due_date: "2024-12-22",
-        subject_name: "Physics",
-        class_name: "Grade 10",
-        class_section: "A",
-        submissionCount: 12,
-        totalStudents: 32,
-        created_at: "2024-12-08T14:30:00Z",
-      },
-      {
-        id: "3",
-        title: "Algebra Word Problems",
-        description: "Solve word problems from worksheet distributed in class.",
-        due_date: "2024-12-25",
-        subject_name: "Mathematics",
-        class_name: "Grade 10",
-        class_section: "B",
-        submissionCount: 5,
-        totalStudents: 28,
-        created_at: "2024-12-09T11:15:00Z",
-      },
-      {
-        id: "4",
-        title: "Science Project Research",
-        description:
-          "Research and prepare a presentation on renewable energy sources.",
-        due_date: "2024-12-18",
-        subject_name: "Science",
-        class_name: "Grade 9",
-        class_section: "A",
-        submissionCount: 25,
-        totalStudents: 30,
-        created_at: "2024-12-01T10:00:00Z",
-      },
-      {
-        id: "5",
-        title: "Motion and Forces Exercise",
-        description: "Complete the numerical problems on motion and forces.",
-        due_date: "2024-12-15",
-        subject_name: "Physics",
-        class_name: "Grade 10",
-        class_section: "A",
-        submissionCount: 32,
-        totalStudents: 32,
-        created_at: "2024-11-28T13:45:00Z",
-      },
-    ];
+  const loadHomework = async () => {
+    if (!user) return;
 
-    setHomework(mockHomework);
+    try {
+      // Load homework assignments created by this teacher
+      const { data: homeworkData, error } = await supabase
+        .from("homework")
+        .select(
+          `
+          id,
+          title,
+          description,
+          due_date,
+          created_at,
+          subjects(name),
+          classes(name, section),
+          student_submissions(count)
+        `,
+        )
+        .eq("teacher_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error loading homework:", error);
+        return;
+      }
+
+      const formattedHomework: Homework[] =
+        homeworkData?.map((hw: any) => {
+          // Get student count for the class
+          const classInfo = classes.find((c) => c.id === hw.class_id);
+          const submissionCount = hw.student_submissions?.[0]?.count || 0;
+
+          return {
+            id: hw.id,
+            title: hw.title,
+            description: hw.description,
+            due_date: hw.due_date,
+            subject_name: hw.subjects?.name || "Unknown Subject",
+            class_name: hw.classes?.name || "Unknown Class",
+            class_section: hw.classes?.section || "",
+            submissionCount,
+            totalStudents: classInfo?.studentCount || 0,
+            created_at: hw.created_at,
+          };
+        }) || [];
+
+      setHomework(formattedHomework);
+    } catch (error) {
+      console.error("Error loading homework:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load homework assignments",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCreateHomework = async (e: React.FormEvent) => {
@@ -233,23 +227,47 @@ const TeacherHomework = () => {
     try {
       setCreating(true);
 
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Create homework in database
+      const { data: newHomeworkData, error } = await supabase
+        .from("homework")
+        .insert({
+          title: formData.title,
+          description: formData.description,
+          due_date: formData.dueDate || null,
+          teacher_id: user?.id,
+          class_id: formData.classId,
+          subject_id: formData.subjectId,
+        })
+        .select(
+          `
+          id,
+          title,
+          description,
+          due_date,
+          created_at,
+          subjects(name),
+          classes(name, section)
+        `,
+        )
+        .single();
+
+      if (error) {
+        throw error;
+      }
 
       const selectedClass = classes.find((c) => c.id === formData.classId);
-      const selectedSubject = subjects.find((s) => s.id === formData.subjectId);
 
       const newHomework: Homework = {
-        id: `hw-${Date.now()}`,
-        title: formData.title,
-        description: formData.description,
-        due_date: formData.dueDate,
-        subject_name: selectedSubject?.name || "",
-        class_name: selectedClass?.name || "",
-        class_section: selectedClass?.section || "",
+        id: newHomeworkData.id,
+        title: newHomeworkData.title,
+        description: newHomeworkData.description,
+        due_date: newHomeworkData.due_date,
+        subject_name: newHomeworkData.subjects?.name || "",
+        class_name: newHomeworkData.classes?.name || "",
+        class_section: newHomeworkData.classes?.section || "",
         submissionCount: 0,
         totalStudents: selectedClass?.studentCount || 0,
-        created_at: new Date().toISOString(),
+        created_at: newHomeworkData.created_at,
       };
 
       setHomework((prev) => [newHomework, ...prev]);
@@ -285,8 +303,16 @@ const TeacherHomework = () => {
     }
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Delete homework from database
+      const { error } = await supabase
+        .from("homework")
+        .delete()
+        .eq("id", homeworkId)
+        .eq("teacher_id", user?.id); // Security: ensure teacher can only delete their own homework
+
+      if (error) {
+        throw error;
+      }
 
       setHomework((prev) => prev.filter((hw) => hw.id !== homeworkId));
 

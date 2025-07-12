@@ -620,19 +620,21 @@ const AdminDashboard = () => {
               <span className="text-sm text-muted-foreground">
                 New Registrations
               </span>
-              <span className="font-medium">3</span>
+              <span className="font-medium">{stats.recentRegistrations}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">
-                Fee Payments
+                Total Revenue
               </span>
-              <span className="font-medium">₹15,000</span>
+              <span className="font-medium">
+                ₹{stats.totalRevenue.toLocaleString()}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">
-                Active Users
+              <span className="text-sm text-muted-foreground">Total Users</span>
+              <span className="font-medium">
+                {stats.totalStudents + stats.totalTeachers}
               </span>
-              <span className="font-medium">234</span>
             </div>
           </CardContent>
         </Card>
@@ -644,21 +646,21 @@ const AdminDashboard = () => {
           <CardContent className="space-y-3">
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">
-                Average Attendance
+                Total Classes
               </span>
-              <span className="font-medium">92%</span>
+              <span className="font-medium">{stats.totalClasses}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">
-                Assignment Completion
+                Active Announcements
               </span>
-              <span className="font-medium">87%</span>
+              <span className="font-medium">{stats.activeAnnouncements}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">
-                Parent Satisfaction
+                Pending Approvals
               </span>
-              <span className="font-medium">4.8/5</span>
+              <span className="font-medium">{stats.pendingApprovals}</span>
             </div>
           </CardContent>
         </Card>

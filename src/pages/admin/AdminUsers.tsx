@@ -70,11 +70,69 @@ const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [creating, setCreating] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    fullName: "",
+    email: "",
+    role: "student",
+    phone: "",
+  });
   const { toast } = useToast();
 
   useEffect(() => {
     loadUsers();
   }, []);
+
+  const handleCreateUser = async () => {
+    if (!newUserData.fullName || !newUserData.email) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setCreating(true);
+
+      // In a real application, you would create the user via Supabase Auth
+      // For now, we'll create a profile record directly
+      const { error } = await supabase.from("profiles").insert({
+        full_name: newUserData.fullName,
+        email: newUserData.email,
+        role: newUserData.role,
+        phone: newUserData.phone || null,
+        is_active: true,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "User created successfully",
+      });
+
+      // Reset form
+      setNewUserData({
+        fullName: "",
+        email: "",
+        role: "student",
+        phone: "",
+      });
+
+      await loadUsers();
+    } catch (error) {
+      console.error("Error creating user:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create user",
+        variant: "destructive",
+      });
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const loadUsers = async () => {
     try {
@@ -85,10 +143,11 @@ const AdminUsers = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      const usersData = data?.map((user: any) => ({
-        ...user,
-        is_active: true // Default active status
-      })) || [];
+      const usersData =
+        data?.map((user: any) => ({
+          ...user,
+          is_active: user.is_active !== false, // Default true if not set
+        })) || [];
       setUsers(usersData);
     } catch (error) {
       console.error("Error loading users:", error);
@@ -104,9 +163,10 @@ const AdminUsers = () => {
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
+      // Update the is_active status instead of changing role
       const { error } = await supabase
         .from("profiles")
-        .update({ role: currentStatus ? "student" : "admin" })
+        .update({ is_active: !currentStatus })
         .eq("id", userId);
 
       if (error) throw error;
@@ -196,7 +256,14 @@ const AdminUsers = () => {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
-                <Input id="fullName" placeholder="Enter full name" />
+                <Input
+                  id="fullName"
+                  placeholder="Enter full name"
+                  value={newUserData.fullName}
+                  onChange={(e) =>
+                    setNewUserData({ ...newUserData, fullName: e.target.value })
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -204,11 +271,20 @@ const AdminUsers = () => {
                   id="email"
                   type="email"
                   placeholder="Enter email address"
+                  value={newUserData.email}
+                  onChange={(e) =>
+                    setNewUserData({ ...newUserData, email: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
-                <Select>
+                <Select
+                  value={newUserData.role}
+                  onValueChange={(value) =>
+                    setNewUserData({ ...newUserData, role: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
@@ -221,9 +297,22 @@ const AdminUsers = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone (Optional)</Label>
-                <Input id="phone" placeholder="Enter phone number" />
+                <Input
+                  id="phone"
+                  placeholder="Enter phone number"
+                  value={newUserData.phone}
+                  onChange={(e) =>
+                    setNewUserData({ ...newUserData, phone: e.target.value })
+                  }
+                />
               </div>
-              <Button className="w-full">Create User</Button>
+              <Button
+                className="w-full"
+                onClick={handleCreateUser}
+                disabled={creating}
+              >
+                {creating ? "Creating..." : "Create User"}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
