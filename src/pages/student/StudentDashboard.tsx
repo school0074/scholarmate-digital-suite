@@ -220,7 +220,7 @@ const StudentDashboard = () => {
         .from("daily_quotes")
         .select("quote_text, author")
         .eq("date_featured", new Date().toISOString().split("T")[0])
-        .single();
+        .maybeSingle();
 
       if (dailyQuoteData) {
         setDailyQuote(
