@@ -30,11 +30,11 @@ const BottomNav = () => {
           { title: "ID Card", url: "/student/id-card", icon: QrCode },
           { title: "Homework", url: "/student/homework", icon: FileText },
           { title: "Timetable", url: "/student/timetable", icon: Calendar },
-          {
-            title: "Ask Doubt",
-            url: "/student/ask-doubt",
-            icon: MessageSquare,
-          },
+            {
+              title: "Chat",
+              url: "/student/chat",
+              icon: MessageSquare,
+            },
         ];
       case "teacher":
         return [
