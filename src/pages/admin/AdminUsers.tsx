@@ -70,6 +70,13 @@ const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [creating, setCreating] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    fullName: "",
+    email: "",
+    role: "student",
+    phone: "",
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -225,7 +232,13 @@ const AdminUsers = () => {
                 <Label htmlFor="phone">Phone (Optional)</Label>
                 <Input id="phone" placeholder="Enter phone number" />
               </div>
-              <Button className="w-full">Create User</Button>
+              <Button
+                className="w-full"
+                onClick={handleCreateUser}
+                disabled={creating}
+              >
+                {creating ? "Creating..." : "Create User"}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
