@@ -131,8 +131,8 @@ const Messages = () => {
           read_at: msg.read_at,
           reply_to: msg.reply_to,
           created_at: msg.created_at,
-          sender_name: msg.sender?.full_name || "Unknown",
-          recipient_name: msg.recipient?.full_name || "Unknown",
+          sender_name: (msg.sender as any)?.full_name || "Unknown",
+          recipient_name: (msg.recipient as any)?.full_name || "Unknown",
         })) || [];
 
       setMessages(messagesData);
@@ -371,7 +371,7 @@ const Messages = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-orange-500" />
+              <User className="h-5 w-5 text-orange-500" />
               <div>
                 <p className="text-sm text-muted-foreground">Contacts</p>
                 <p className="text-2xl font-bold">{contacts.length}</p>

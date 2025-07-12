@@ -546,7 +546,7 @@ const TeacherAttendance = () => {
                             onChange={(e) =>
                               updateNotes(student.id, e.target.value)
                             }
-                            size="sm"
+                            className="h-8"
                           />
                         </div>
                       </div>

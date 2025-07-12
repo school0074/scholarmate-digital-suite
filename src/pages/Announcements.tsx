@@ -122,13 +122,13 @@ const Announcements = () => {
           title: ann.title,
           content: ann.content,
           author_id: ann.author_id || "",
-          author_name: ann.profiles?.full_name || "Unknown",
+          author_name: (ann.profiles as any)?.full_name || "Unknown",
           target_role: ann.target_role,
           class_id: ann.class_id,
           class_name: ann.classes
             ? `${ann.classes.name} ${ann.classes.section}`
             : null,
-          priority: ann.priority || "normal",
+          priority: (ann.priority as "low" | "normal" | "high" | "urgent") || "normal",
           expires_at: ann.expires_at,
           created_at: ann.created_at,
           updated_at: ann.updated_at,

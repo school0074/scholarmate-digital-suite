@@ -85,7 +85,11 @@ const AdminUsers = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setUsers(data || []);
+      const usersData = data?.map((user: any) => ({
+        ...user,
+        is_active: true // Default active status
+      })) || [];
+      setUsers(usersData);
     } catch (error) {
       console.error("Error loading users:", error);
       toast({
@@ -102,7 +106,7 @@ const AdminUsers = () => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ is_active: !currentStatus })
+        .update({ role: currentStatus ? "student" : "admin" })
         .eq("id", userId);
 
       if (error) throw error;

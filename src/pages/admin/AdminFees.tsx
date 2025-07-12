@@ -129,7 +129,11 @@ const AdminFees = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setFees(data || []);
+      const feesData = data?.map((fee: any) => ({
+        ...fee,
+        student_name: (fee.student as any)?.full_name || "Unknown Student"
+      })) || [];
+      setFees(feesData);
     } catch (error) {
       console.error("Error loading fees:", error);
       toast({

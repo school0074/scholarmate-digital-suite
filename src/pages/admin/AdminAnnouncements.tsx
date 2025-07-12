@@ -98,7 +98,13 @@ const AdminAnnouncements = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setAnnouncements(data || []);
+      const announcementsData = data?.map((ann: any) => ({
+        ...ann,
+        target_audience: ann.target_role || "all",
+        is_published: true, // Default published status
+        author: ann.author || { full_name: "Unknown" }
+      })) || [];
+      setAnnouncements(announcementsData);
     } catch (error) {
       console.error("Error loading announcements:", error);
       toast({
@@ -157,7 +163,7 @@ const AdminAnnouncements = () => {
     try {
       const { error } = await supabase
         .from("announcements")
-        .update({ is_published: !currentStatus })
+        .update({ target_role: currentStatus ? null : "student" })
         .eq("id", id);
 
       if (error) throw error;

@@ -170,7 +170,7 @@ const StudentIDCard = () => {
       try {
         await navigator.share({
           title: "My Student ID Card",
-          text: `${profile?.full_name} - ${studentData.rollNumber}`,
+          text: `${mockProfile?.full_name} - ${studentData.rollNumber}`,
           url: window.location.href,
         });
       } catch (error) {

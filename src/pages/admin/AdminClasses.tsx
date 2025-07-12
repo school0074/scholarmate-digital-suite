@@ -125,7 +125,10 @@ const AdminClasses = () => {
 
           return {
             ...cls,
+            grade: cls.grade_level?.toString() || "1",
+            capacity: 30, // Default capacity
             current_students: enrollments?.length || 0,
+            teacher: (cls as any).teacher || { full_name: "Not assigned" }
           };
         }),
       );
