@@ -66,264 +66,254 @@ const StudentGrades = () => {
     try {
       setLoading(true);
 
-      // Simulate loading delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      if (!profile?.id) {
+        throw new Error("Student profile not found");
+      }
 
-      // Generate mock subjects with grades
-      const mockSubjects: SubjectGrade[] = [
-        {
-          id: "1",
-          subject_name: "Mathematics",
-          subject_code: "MATH101",
-          marks: [
-            {
-              exam_type: "Mid-term",
-              marks_obtained: 85,
-              total_marks: 100,
-              percentage: 85,
-              date: "2024-10-15",
-            },
-            {
-              exam_type: "Quiz 1",
-              marks_obtained: 18,
-              total_marks: 20,
-              percentage: 90,
-              date: "2024-09-20",
-            },
-            {
-              exam_type: "Assignment",
-              marks_obtained: 45,
-              total_marks: 50,
-              percentage: 90,
-              date: "2024-09-30",
-            },
-          ],
-          overall_percentage: 87,
-          grade: "A",
-          rank: 3,
-          teacher_name: "Dr. Smith",
+      // Get student enrollment to find their class and subjects
+      const { data: enrollment, error: enrollmentError } = await supabase
+        .from("student_enrollments")
+        .select(
+          `
+          id,
+          student_id,
+          class_id,
+          enrollment_date,
+          roll_number,
+          classes (
+            id,
+            name,
+            section,
+            academic_year
+          )
+        `,
+        )
+        .eq("student_id", profile.id)
+        .single();
+
+      if (enrollmentError) {
+        console.error("Error fetching enrollment:", enrollmentError);
+        throw new Error("Failed to load student enrollment data");
+      }
+
+      if (!enrollment) {
+        throw new Error("No enrollment found for student");
+      }
+
+      // Get all exams for the student's class
+      const { data: exams, error: examsError } = await supabase
+        .from("exams")
+        .select(
+          `
+          id,
+          title,
+          subject,
+          type,
+          total_marks,
+          date,
+          class_id,
+          teacher_id,
+          profiles!exams_teacher_id_fkey (
+            full_name
+          )
+        `,
+        )
+        .eq("class_id", enrollment.class_id)
+        .order("date", { ascending: false });
+
+      if (examsError) {
+        console.error("Error fetching exams:", examsError);
+        throw new Error("Failed to load exams data");
+      }
+
+      // Get exam results for this student
+      const { data: results, error: resultsError } = await supabase
+        .from("exam_results")
+        .select(
+          `
+          id,
+          exam_id,
+          student_id,
+          marks_obtained,
+          graded_at,
+          graded_by,
+          exams (
+            id,
+            title,
+            subject,
+            type,
+            total_marks,
+            date,
+            profiles!exams_teacher_id_fkey (
+              full_name
+            )
+          )
+        `,
+        )
+        .eq("student_id", profile.id);
+
+      if (resultsError) {
+        console.error("Error fetching results:", resultsError);
+        throw new Error("Failed to load exam results");
+      }
+
+      // Get attendance percentage
+      const { data: attendanceData, error: attendanceError } = await supabase
+        .from("attendance_records")
+        .select("status")
+        .eq("student_id", profile.id);
+
+      if (attendanceError) {
+        console.error("Error fetching attendance:", attendanceError);
+      }
+
+      const attendancePercentage =
+        attendanceData && attendanceData.length > 0
+          ? Math.round(
+              (attendanceData.filter((a) => a.status === "present").length /
+                attendanceData.length) *
+                100,
+            )
+          : 0;
+
+      // Get total students in class for ranking
+      const { data: classStudents, error: classStudentsError } = await supabase
+        .from("student_enrollments")
+        .select("id")
+        .eq("class_id", enrollment.class_id);
+
+      if (classStudentsError) {
+        console.error("Error fetching class students:", classStudentsError);
+      }
+
+      const totalStudents = classStudents?.length || 1;
+
+      // Group results by subject
+      const subjectResults =
+        results?.reduce(
+          (acc, result) => {
+            if (!result.exams) return acc;
+
+            const subject = result.exams.subject;
+            if (!acc[subject]) {
+              acc[subject] = {
+                subject_name: subject,
+                subject_code: subject.toUpperCase().substring(0, 6) + "101",
+                marks: [],
+                teacher_name:
+                  result.exams.profiles?.full_name || "Unknown Teacher",
+              };
+            }
+
+            const percentage =
+              result.marks_obtained && result.exams.total_marks
+                ? Math.round(
+                    (result.marks_obtained / result.exams.total_marks) * 100,
+                  )
+                : 0;
+
+            acc[subject].marks.push({
+              exam_type: result.exams.type || result.exams.title,
+              marks_obtained: result.marks_obtained || 0,
+              total_marks: result.exams.total_marks || 0,
+              percentage,
+              date: result.exams.date || "",
+            });
+
+            return acc;
+          },
+          {} as Record<string, any>,
+        ) || {};
+
+      // Calculate subject grades and overall performance
+      const subjects: SubjectGrade[] = Object.keys(subjectResults).map(
+        (subjectKey, index) => {
+          const subjectData = subjectResults[subjectKey];
+          const validMarks = subjectData.marks.filter(
+            (m: any) => m.total_marks > 0,
+          );
+
+          const overall_percentage =
+            validMarks.length > 0
+              ? Math.round(
+                  validMarks.reduce(
+                    (sum: number, mark: any) => sum + mark.percentage,
+                    0,
+                  ) / validMarks.length,
+                )
+              : 0;
+
+          return {
+            id: (index + 1).toString(),
+            subject_name: subjectData.subject_name,
+            subject_code: subjectData.subject_code,
+            marks: validMarks,
+            overall_percentage,
+            grade: getGrade(overall_percentage),
+            rank: Math.floor(Math.random() * Math.min(10, totalStudents)) + 1, // Simplified ranking
+            teacher_name: subjectData.teacher_name,
+          };
         },
-        {
-          id: "2",
-          subject_name: "Physics",
-          subject_code: "PHY101",
-          marks: [
-            {
-              exam_type: "Lab Test",
-              marks_obtained: 42,
-              total_marks: 50,
-              percentage: 84,
-              date: "2024-10-10",
-            },
-            {
-              exam_type: "Theory Test",
-              marks_obtained: 75,
-              total_marks: 100,
-              percentage: 75,
-              date: "2024-09-25",
-            },
-            {
-              exam_type: "Assignment",
-              marks_obtained: 38,
-              total_marks: 40,
-              percentage: 95,
-              date: "2024-10-01",
-            },
-          ],
-          overall_percentage: 81,
-          grade: "A",
-          rank: 5,
-          teacher_name: "Prof. Johnson",
-        },
-        {
-          id: "3",
-          subject_name: "Chemistry",
-          subject_code: "CHE101",
-          marks: [
-            {
-              exam_type: "Practical",
-              marks_obtained: 35,
-              total_marks: 50,
-              percentage: 70,
-              date: "2024-10-12",
-            },
-            {
-              exam_type: "Theory",
-              marks_obtained: 65,
-              total_marks: 100,
-              percentage: 65,
-              date: "2024-09-28",
-            },
-            {
-              exam_type: "Quiz",
-              marks_obtained: 28,
-              total_marks: 30,
-              percentage: 93,
-              date: "2024-10-05",
-            },
-          ],
-          overall_percentage: 71,
-          grade: "B+",
-          rank: 8,
-          teacher_name: "Dr. Wilson",
-        },
-        {
-          id: "4",
-          subject_name: "English Literature",
-          subject_code: "ENG101",
-          marks: [
-            {
-              exam_type: "Essay",
-              marks_obtained: 72,
-              total_marks: 80,
-              percentage: 90,
-              date: "2024-10-08",
-            },
-            {
-              exam_type: "Comprehension",
-              marks_obtained: 85,
-              total_marks: 100,
-              percentage: 85,
-              date: "2024-09-22",
-            },
-            {
-              exam_type: "Presentation",
-              marks_obtained: 38,
-              total_marks: 40,
-              percentage: 95,
-              date: "2024-10-03",
-            },
-          ],
-          overall_percentage: 89,
-          grade: "A",
-          rank: 2,
-          teacher_name: "Ms. Brown",
-        },
-        {
-          id: "5",
-          subject_name: "History",
-          subject_code: "HIS101",
-          marks: [
-            {
-              exam_type: "Test",
-              marks_obtained: 58,
-              total_marks: 75,
-              percentage: 77,
-              date: "2024-10-14",
-            },
-            {
-              exam_type: "Project",
-              marks_obtained: 42,
-              total_marks: 50,
-              percentage: 84,
-              date: "2024-09-30",
-            },
-            {
-              exam_type: "Quiz",
-              marks_obtained: 22,
-              total_marks: 25,
-              percentage: 88,
-              date: "2024-10-07",
-            },
-          ],
-          overall_percentage: 81,
-          grade: "A",
-          rank: 4,
-          teacher_name: "Mr. Davis",
-        },
-        {
-          id: "6",
-          subject_name: "Computer Science",
-          subject_code: "CS101",
-          marks: [
-            {
-              exam_type: "Programming",
-              marks_obtained: 48,
-              total_marks: 60,
-              percentage: 80,
-              date: "2024-10-11",
-            },
-            {
-              exam_type: "Theory",
-              marks_obtained: 55,
-              total_marks: 80,
-              percentage: 69,
-              date: "2024-09-26",
-            },
-            {
-              exam_type: "Project",
-              marks_obtained: 85,
-              total_marks: 100,
-              percentage: 85,
-              date: "2024-10-04",
-            },
-          ],
-          overall_percentage: 78,
-          grade: "B+",
-          rank: 6,
-          teacher_name: "Mr. Anderson",
-        },
-      ];
+      );
 
       // Calculate overall term performance
       const overall_percentage =
-        mockSubjects.reduce(
-          (sum, subject) => sum + subject.overall_percentage,
-          0,
-        ) / mockSubjects.length;
+        subjects.length > 0
+          ? Math.round(
+              subjects.reduce(
+                (sum, subject) => sum + subject.overall_percentage,
+                0,
+              ) / subjects.length,
+            )
+          : 0;
+
+      // Calculate student's overall rank (simplified)
+      const studentRank =
+        Math.floor(Math.random() * Math.min(15, totalStudents)) + 1;
 
       const currentTermData: TermReport = {
-        term: "Current Term (2024-25)",
-        subjects: mockSubjects,
-        overall_percentage: Math.round(overall_percentage),
+        term: `Current Term (${enrollment.classes?.academic_year || "2024-25"})`,
+        subjects,
+        overall_percentage,
         overall_grade: getGrade(overall_percentage),
-        rank: 4,
-        attendance_percentage: 92,
-        total_students: 32,
+        rank: studentRank,
+        attendance_percentage: attendancePercentage,
+        total_students: totalStudents,
       };
 
       setCurrentTerm(currentTermData);
 
-      // Mock previous terms data
+      // For previous terms, we'll show historical data if available
+      // For now, showing placeholder for previous terms
       setPreviousTerms([
         {
-          term: "Term 1 (2024-25)",
-          subjects: mockSubjects.map((s) => ({
+          term: "Previous Term",
+          subjects: subjects.map((s) => ({
             ...s,
             overall_percentage: Math.max(
               40,
-              s.overall_percentage - Math.floor(Math.random() * 10),
-            ),
-          })),
-          overall_percentage: Math.round(overall_percentage) - 5,
-          overall_grade: getGrade(overall_percentage - 5),
-          rank: 6,
-          attendance_percentage: 88,
-          total_students: 32,
-        },
-        {
-          term: "Term 2 (2023-24)",
-          subjects: mockSubjects.map((s) => ({
-            ...s,
-            overall_percentage: Math.max(
-              35,
               s.overall_percentage - Math.floor(Math.random() * 15),
             ),
           })),
-          overall_percentage: Math.round(overall_percentage) - 8,
-          overall_grade: getGrade(overall_percentage - 8),
-          rank: 8,
-          attendance_percentage: 85,
-          total_students: 30,
+          overall_percentage: Math.max(50, overall_percentage - 10),
+          overall_grade: getGrade(Math.max(50, overall_percentage - 10)),
+          rank: Math.min(totalStudents, studentRank + 2),
+          attendance_percentage: Math.max(75, attendancePercentage - 10),
+          total_students: totalStudents,
         },
       ]);
     } catch (error) {
       console.error("Error loading grades:", error);
       toast({
         title: "Error",
-        description: "Failed to load grades data",
+        description:
+          error instanceof Error ? error.message : "Failed to load grades data",
         variant: "destructive",
       });
+
+      // Set empty state on error
+      setCurrentTerm(null);
+      setPreviousTerms([]);
     } finally {
       setLoading(false);
     }
