@@ -48,60 +48,131 @@ interface HomeworkItem {
 }
 
 const StudentHomework = () => {
+  const { toast } = useToast();
+  const { user, profile } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [searchTerm, setSearchTerm] = useState("");
+  const [homeworkList, setHomeworkList] = useState<HomeworkItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const homeworkList = [
-    {
-      id: 1,
-      title: "Algebra Practice Problems",
-      subject: "Mathematics",
-      description:
-        "Complete exercises 1-20 from Chapter 5: Quadratic Equations",
-      dueDate: new Date(2024, 11, 15),
-      status: "pending",
-      priority: "high",
-      submissionType: "file",
-      maxMarks: 50,
-      instructions: "Show all working steps clearly",
-    },
-    {
-      id: 2,
-      title: "Physics Lab Report",
-      subject: "Physics",
-      description:
-        "Write a detailed report on the pendulum experiment conducted in class",
-      dueDate: new Date(2024, 11, 18),
-      status: "submitted",
-      priority: "medium",
-      submissionType: "file",
-      maxMarks: 30,
-      submittedDate: new Date(2024, 11, 10),
-      grade: 28,
-    },
-    {
-      id: 3,
-      title: "Shakespeare Essay",
-      subject: "English Literature",
-      description: "Write a 500-word essay analyzing the themes in Hamlet",
-      dueDate: new Date(2024, 11, 20),
-      status: "pending",
-      priority: "medium",
-      submissionType: "text",
-      maxMarks: 40,
-    },
-    {
-      id: 4,
-      title: "Chemical Equations Worksheet",
-      subject: "Chemistry",
-      description: "Balance the chemical equations and solve the problems",
-      dueDate: new Date(2024, 11, 12),
-      status: "overdue",
-      priority: "high",
-      submissionType: "file",
-      maxMarks: 25,
-    },
-  ];
+  useEffect(() => {
+    if (user && profile) {
+      loadStudentHomework();
+    }
+  }, [user, profile]);
+
+  const loadStudentHomework = async () => {
+    try {
+      setLoading(true);
+
+      if (!user) return;
+
+      // Get student's enrolled classes
+      const { data: enrollments } = await supabase
+        .from("student_enrollments")
+        .select("class_id")
+        .eq("student_id", user.id);
+
+      if (!enrollments || enrollments.length === 0) {
+        setHomeworkList([]);
+        return;
+      }
+
+      const classIds = enrollments.map((e) => e.class_id);
+
+      // Load homework for student's classes
+      const { data: homeworkData, error } = await supabase
+        .from("homework")
+        .select(
+          `
+          id,
+          title,
+          description,
+          due_date,
+          max_marks,
+          created_at,
+          subjects(name),
+          profiles(full_name),
+          student_submissions!left(
+            id,
+            submitted_at,
+            grade,
+            content
+          )
+        `,
+        )
+        .in("class_id", classIds)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error loading homework:", error);
+        return;
+      }
+
+      const formattedHomework: HomeworkItem[] =
+        homeworkData?.map((hw: any) => {
+          const submission = hw.student_submissions?.find(
+            (sub: any) => sub.student_id === user.id,
+          );
+
+          let status: "pending" | "submitted" | "overdue" | "graded" =
+            "pending";
+
+          if (submission) {
+            status = submission.grade !== null ? "graded" : "submitted";
+          } else if (
+            hw.due_date &&
+            isBefore(new Date(hw.due_date), new Date())
+          ) {
+            status = "overdue";
+          }
+
+          // Determine priority based on due date
+          let priority: "high" | "medium" | "low" = "medium";
+          if (hw.due_date) {
+            const dueDate = new Date(hw.due_date);
+            const now = new Date();
+            const daysUntilDue = Math.ceil(
+              (dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+            );
+
+            if (daysUntilDue <= 1) {
+              priority = "high";
+            } else if (daysUntilDue <= 3) {
+              priority = "medium";
+            } else {
+              priority = "low";
+            }
+          }
+
+          return {
+            id: hw.id,
+            title: hw.title,
+            subject: hw.subjects?.name || "Unknown Subject",
+            description: hw.description || "No description provided",
+            due_date: hw.due_date,
+            status,
+            priority,
+            max_marks: hw.max_marks,
+            submission_id: submission?.id,
+            submitted_date: submission?.submitted_at,
+            grade: submission?.grade,
+            teacher_name: hw.profiles?.full_name || "Unknown Teacher",
+          };
+        }) || [];
+
+      setHomeworkList(formattedHomework);
+    } catch (error) {
+      console.error("Error loading homework:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load homework assignments",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
