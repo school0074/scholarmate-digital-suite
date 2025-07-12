@@ -23,6 +23,8 @@ import {
   endOfMonth,
   eachDayOfInterval,
 } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AttendanceRecord {
   id: string;
@@ -42,12 +44,7 @@ interface AttendanceStats {
 
 const StudentAttendance = () => {
   const { toast } = useToast();
-
-  // Mock student profile data
-  const mockProfile = {
-    id: "student-123",
-    full_name: "John Doe",
-  };
+  const { user, profile } = useAuth();
   const [attendanceRecords, setAttendanceRecords] = useState<
     AttendanceRecord[]
   >([]);
@@ -63,8 +60,10 @@ const StudentAttendance = () => {
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
 
   useEffect(() => {
-    loadMockAttendanceData();
-  }, [selectedDate]);
+    if (user && profile) {
+      loadAttendanceData();
+    }
+  }, [selectedDate, user, profile]);
 
   const loadMockAttendanceData = async () => {
     try {
