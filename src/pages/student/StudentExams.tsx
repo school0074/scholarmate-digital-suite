@@ -25,6 +25,8 @@ import {
   addDays,
   differenceInDays,
 } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Exam {
   id: string;
@@ -51,32 +53,116 @@ interface ExamResult {
 
 const StudentExams = () => {
   const { toast } = useToast();
-
-  // Mock student profile data
-  const mockProfile = {
-    id: "student-123",
-    full_name: "John Doe",
-  };
+  const { user, profile } = useAuth();
   const [upcomingExams, setUpcomingExams] = useState<Exam[]>([]);
   const [pastExams, setPastExams] = useState<Exam[]>([]);
   const [examResults, setExamResults] = useState<ExamResult[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadMockExamsData();
-  }, []);
+    useEffect(() => {
+    if (user && profile) {
+      loadExamsData();
+    }
+  }, [user, profile]);
 
-  const loadMockExamsData = async () => {
+    const loadExamsData = async () => {
     try {
       setLoading(true);
 
-      // Simulate loading delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      if (!user) return;
 
       const today = new Date();
 
-      // Generate mock upcoming exams
-      const mockUpcomingExams: Exam[] = [
+      // Load real exams for student's classes
+      const { data: studentEnrollment } = await supabase
+        .from('student_enrollments')
+        .select('class_id')
+        .eq('student_id', user.id);
+
+      if (!studentEnrollment || studentEnrollment.length === 0) {
+        setUpcomingExams([]);
+        setPastExams([]);
+        setExamResults([]);
+        return;
+      }
+
+      const classIds = studentEnrollment.map(e => e.class_id);
+
+      // Load exams for student's classes
+      const { data: examsData, error: examsError } = await supabase
+        .from('exams')
+        .select(`
+          id,
+          title,
+          description,
+          exam_date,
+          start_time,
+          duration_minutes,
+          total_marks,
+          room_number,
+          subjects(name),
+          profiles(full_name)
+        `)
+        .in('class_id', classIds)
+        .order('exam_date', { ascending: true });
+
+      if (examsError) {
+        console.error('Error loading exams:', examsError);
+        throw examsError;
+      }
+
+      const formattedExams: Exam[] = examsData?.map((exam: any) => ({
+        id: exam.id,
+        title: exam.title,
+        description: exam.description || 'No description provided',
+        exam_date: exam.exam_date,
+        start_time: exam.start_time,
+        duration_minutes: exam.duration_minutes,
+        total_marks: exam.total_marks,
+        subject_name: exam.subjects?.name || 'Unknown Subject',
+        teacher_name: exam.profiles?.full_name || 'Unknown Teacher',
+        room_number: exam.room_number,
+      })) || [];
+
+      // Separate upcoming and past exams
+      const upcoming = formattedExams.filter(exam =>
+        new Date(exam.exam_date) >= today
+      );
+      const past = formattedExams.filter(exam =>
+        new Date(exam.exam_date) < today
+      );
+
+      setUpcomingExams(upcoming);
+      setPastExams(past);
+
+      // Load exam results/marks
+      const { data: marksData, error: marksError } = await supabase
+        .from('marks')
+        .select(`
+          id,
+          exam_id,
+          marks_obtained,
+          total_marks,
+          grade,
+          exams(title)
+        `)
+        .eq('student_id', user.id);
+
+      if (marksError) {
+        console.error('Error loading marks:', marksError);
+      } else {
+        const formattedResults: ExamResult[] = marksData?.map((mark: any) => ({
+          id: mark.id,
+          exam_id: mark.exam_id,
+          marks_obtained: mark.marks_obtained,
+          total_marks: mark.total_marks,
+          percentage: (mark.marks_obtained / mark.total_marks) * 100,
+          grade: mark.grade || 'N/A',
+          exam_title: mark.exams?.title || 'Unknown Exam',
+        })) || [];
+
+        setExamResults(formattedResults);
+      }
         {
           id: "1",
           title: "Mathematics Mid-Term Exam",
