@@ -99,15 +99,58 @@ const StudentTimetable = () => {
     return () => clearInterval(interval);
   }, [timetableData]);
 
-  const loadMockTimetableData = async () => {
+    const loadTimetableData = async () => {
     try {
-      setLoading(true);
+            setLoading(true);
 
-      // Simulate loading delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      if (!user) return;
 
-      // Generate mock timetable data
-      const mockTimetableData: TimetableEntry[] = [
+      // Get student's class enrollment
+      const { data: enrollment } = await supabase
+        .from('student_enrollments')
+        .select('class_id')
+        .eq('student_id', user.id)
+        .single();
+
+      if (!enrollment || !enrollment.class_id) {
+        setTimetableData([]);
+        return;
+      }
+
+      // Load timetable for student's class
+      const { data: timetableData, error } = await supabase
+        .from('timetable')
+        .select(`
+          id,
+          day_of_week,
+          start_time,
+          end_time,
+          room_number,
+          subjects(name),
+          profiles(full_name)
+        `)
+        .eq('class_id', enrollment.class_id)
+        .order('day_of_week')
+        .order('start_time');
+
+      if (error) {
+        console.error('Error loading timetable:', error);
+        throw error;
+      }
+
+      const formattedTimetable: TimetableEntry[] = timetableData?.map((entry: any) => ({
+        id: entry.id,
+        day_of_week: entry.day_of_week,
+        start_time: entry.start_time,
+        end_time: entry.end_time,
+        subject_name: entry.subjects?.name || 'Unknown Subject',
+        teacher_name: entry.profiles?.full_name || 'TBA',
+        room_number: entry.room_number || 'TBA',
+        subject_id: entry.subject_id,
+        teacher_id: entry.teacher_id,
+      })) || [];
+
+      setTimetableData(formattedTimetable);
         // Monday
         {
           id: "1",
