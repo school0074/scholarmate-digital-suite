@@ -101,8 +101,7 @@ const TeacherDashboard = () => {
           id,
           name,
           section,
-          student_enrollments(count),
-          class_subjects(subjects(name))
+          student_enrollments(count)
         `,
         )
         .eq("teacher_id", user.id);
@@ -117,8 +116,7 @@ const TeacherDashboard = () => {
           name: cls.name,
           section: cls.section,
           studentCount: cls.student_enrollments?.[0]?.count || 0,
-          subjects:
-            cls.class_subjects?.map((cs: any) => cs.subjects?.name) || [],
+          subjects: [], // TODO: Load subjects separately if needed
         })) || [];
 
       setClasses(formattedClasses);
@@ -139,20 +137,19 @@ const TeacherDashboard = () => {
           await supabase
             .from("homework")
             .select("id")
-            .eq("teacher_id", user.id)
+            .eq("assigned_by", user.id)
             .then((res) => res.data?.map((h) => h.id) || []),
         );
 
       // Get upcoming lessons/classes
+      const currentDay = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const currentTime = new Date().toTimeString().slice(0, 8); // HH:MM:SS format
+      
       const { data: upcomingLessons } = await supabase
         .from("timetable")
         .select("id")
         .eq("teacher_id", user.id)
-        .gte("date", new Date().toISOString())
-        .lt(
-          "date",
-          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        );
+        .or(`day_of_week.gt.${currentDay},and(day_of_week.eq.${currentDay},start_time.gte.${currentTime})`);
 
       // Get unread messages
       const { data: unreadMessages } = await supabase
@@ -171,7 +168,7 @@ const TeacherDashboard = () => {
           await supabase
             .from("homework")
             .select("id")
-            .eq("teacher_id", user.id)
+            .eq("assigned_by", user.id)
             .then((res) => res.data?.map((h) => h.id) || []),
         );
 
@@ -192,7 +189,7 @@ const TeacherDashboard = () => {
           id,
           created_at,
           homework(title),
-          profiles(full_name)
+          student:profiles!student_id(full_name)
         `,
         )
         .in(
@@ -200,7 +197,7 @@ const TeacherDashboard = () => {
           await supabase
             .from("homework")
             .select("id")
-            .eq("teacher_id", user.id)
+            .eq("assigned_by", user.id)
             .then((res) => res.data?.map((h) => h.id) || []),
         )
         .order("created_at", { ascending: false })
@@ -209,7 +206,7 @@ const TeacherDashboard = () => {
       const { data: recentHomework } = await supabase
         .from("homework")
         .select("id, title, due_date, created_at")
-        .eq("teacher_id", user.id)
+        .eq("assigned_by", user.id)
         .order("created_at", { ascending: false })
         .limit(2);
 
@@ -221,7 +218,7 @@ const TeacherDashboard = () => {
           id: submission.id,
           type: "submission",
           title: "New Assignment Submission",
-          description: `${submission.homework?.title} submitted by ${submission.profiles?.full_name}`,
+          description: `${submission.homework?.title} submitted by ${submission.student?.full_name}`,
           time: getTimeAgo(submission.created_at),
           priority: "medium",
         });
