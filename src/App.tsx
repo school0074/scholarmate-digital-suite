@@ -19,6 +19,7 @@ import StudentExams from "./pages/student/StudentExams";
 import StudentGrades from "./pages/student/StudentGrades";
 import StudentMessages from "./pages/student/StudentMessages";
 import StudentLibrary from "./pages/student/StudentLibrary";
+import StudentFees from "./pages/student/StudentFees";
 import StudentChat from "./pages/student/StudentChat";
 import StudentReminders from "./pages/student/StudentReminders";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
