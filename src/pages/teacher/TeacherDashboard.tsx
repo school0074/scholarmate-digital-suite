@@ -22,6 +22,24 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
+// Helper function to format time ago
+const getTimeAgo = (dateString: string): string => {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffInMinutes = Math.floor(
+    (now.getTime() - date.getTime()) / (1000 * 60),
+  );
+
+  if (diffInMinutes < 1) return "Just now";
+  if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours} hours ago`;
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays} days ago`;
+};
+
 interface TeacherStats {
   totalStudents: number;
   totalClasses: number;
@@ -231,6 +249,18 @@ const TeacherDashboard = () => {
         description: "Failed to load dashboard data",
         variant: "destructive",
       });
+
+      // Set fallback empty data on error
+      setClasses([]);
+      setStats({
+        totalStudents: 0,
+        totalClasses: 0,
+        pendingGrading: 0,
+        upcomingLessons: 0,
+        unreadMessages: 0,
+        completedAssignments: 0,
+      });
+      setRecentActivity([]);
     } finally {
       setLoading(false);
     }
