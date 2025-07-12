@@ -29,6 +29,8 @@ import {
   Upload,
 } from "lucide-react";
 import { format, isAfter, isBefore } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Class {
   id: string;
@@ -58,12 +60,7 @@ interface Homework {
 
 const TeacherHomework = () => {
   const { toast } = useToast();
-
-  // Mock teacher profile data
-  const mockProfile = {
-    id: "teacher-123",
-    full_name: "Prof. Sarah Johnson",
-  };
+  const { user, profile } = useAuth();
   const [classes, setClasses] = useState<Class[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [homework, setHomework] = useState<Homework[]>([]);
@@ -80,62 +77,71 @@ const TeacherHomework = () => {
   });
 
   useEffect(() => {
-    loadMockTeacherData();
-  }, []);
+    if (user && profile) {
+      loadTeacherData();
+    }
+  }, [user, profile]);
 
-  const loadMockTeacherData = async () => {
+  const loadTeacherData = async () => {
     try {
       setLoading(true);
 
-      // Simulate loading delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      if (!user) return;
 
-      // Mock classes data
-      const mockClasses: Class[] = [
-        {
-          id: "1",
-          name: "Grade 10",
-          section: "A",
-          studentCount: 32,
-        },
-        {
-          id: "2",
-          name: "Grade 10",
-          section: "B",
-          studentCount: 28,
-        },
-        {
-          id: "3",
-          name: "Grade 9",
-          section: "A",
-          studentCount: 30,
-        },
-      ];
+      // Load teacher's classes from database
+      const { data: teacherClasses, error: classesError } = await supabase
+        .from("classes")
+        .select(
+          `
+          id,
+          name,
+          section,
+          student_enrollments(count)
+        `,
+        )
+        .eq("teacher_id", user.id);
 
-      // Mock subjects data
-      const mockSubjects: Subject[] = [
-        {
-          id: "1",
-          name: "Mathematics",
-          code: "MATH101",
-        },
-        {
-          id: "2",
-          name: "Physics",
-          code: "PHY101",
-        },
-        {
-          id: "3",
-          name: "Science",
-          code: "SCI101",
-        },
-      ];
+      if (classesError) {
+        console.error("Error loading classes:", classesError);
+      }
 
-      setClasses(mockClasses);
-      setSubjects(mockSubjects);
+      // Load subjects that the teacher teaches
+      const { data: teacherSubjects, error: subjectsError } = await supabase
+        .from("subjects")
+        .select("id, name, code")
+        .in(
+          "id",
+          await supabase
+            .from("class_subjects")
+            .select("subject_id")
+            .eq("teacher_id", user.id)
+            .then((res) => res.data?.map((cs) => cs.subject_id) || []),
+        );
 
-      // Load mock homework data
-      loadMockHomework();
+      if (subjectsError) {
+        console.error("Error loading subjects:", subjectsError);
+      }
+
+      const formattedClasses: Class[] =
+        teacherClasses?.map((cls: any) => ({
+          id: cls.id,
+          name: cls.name,
+          section: cls.section,
+          studentCount: cls.student_enrollments?.[0]?.count || 0,
+        })) || [];
+
+      const formattedSubjects: Subject[] =
+        teacherSubjects?.map((subj: any) => ({
+          id: subj.id,
+          name: subj.name,
+          code: subj.code,
+        })) || [];
+
+      setClasses(formattedClasses);
+      setSubjects(formattedSubjects);
+
+      // Load teacher's homework assignments
+      loadHomework();
     } catch (error) {
       console.error("Error loading teacher data:", error);
       toast({
