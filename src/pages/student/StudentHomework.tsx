@@ -393,24 +393,36 @@ const StudentHomework = () => {
                   </Badge>
 
                   <div className="text-sm text-muted-foreground">
-                    <p>Due: {format(homework.dueDate, "MMM dd, yyyy")}</p>
-                    <p>Max Marks: {homework.maxMarks}</p>
-                    {homework.status === "pending" && (
+                    {homework.due_date && (
+                      <p>
+                        Due:{" "}
+                        {format(new Date(homework.due_date), "MMM dd, yyyy")}
+                      </p>
+                    )}
+                    {homework.max_marks && (
+                      <p>Max Marks: {homework.max_marks}</p>
+                    )}
+                    {homework.teacher_name && (
+                      <p>Teacher: {homework.teacher_name}</p>
+                    )}
+                    {homework.status === "pending" && homework.due_date && (
                       <p
-                        className={`font-medium ${getDaysUntilDue(homework.dueDate) < 0 ? "text-red-600" : getDaysUntilDue(homework.dueDate) <= 1 ? "text-yellow-600" : "text-green-600"}`}
+                        className={`font-medium ${getDaysUntilDue(homework.due_date)! < 0 ? "text-red-600" : getDaysUntilDue(homework.due_date)! <= 1 ? "text-yellow-600" : "text-green-600"}`}
                       >
-                        {getDaysUntilDue(homework.dueDate) < 0
-                          ? `${Math.abs(getDaysUntilDue(homework.dueDate))} days overdue`
-                          : getDaysUntilDue(homework.dueDate) === 0
+                        {getDaysUntilDue(homework.due_date)! < 0
+                          ? `${Math.abs(getDaysUntilDue(homework.due_date)!)} days overdue`
+                          : getDaysUntilDue(homework.due_date) === 0
                             ? "Due today"
-                            : `${getDaysUntilDue(homework.dueDate)} days left`}
+                            : `${getDaysUntilDue(homework.due_date)} days left`}
                       </p>
                     )}
-                    {homework.status === "submitted" && homework.grade && (
-                      <p className="text-green-600 font-medium">
-                        Grade: {homework.grade}/{homework.maxMarks}
-                      </p>
-                    )}
+                    {(homework.status === "submitted" ||
+                      homework.status === "graded") &&
+                      homework.grade && (
+                        <p className="text-green-600 font-medium">
+                          Grade: {homework.grade}/{homework.max_marks}
+                        </p>
+                      )}
                   </div>
                 </div>
               </div>
