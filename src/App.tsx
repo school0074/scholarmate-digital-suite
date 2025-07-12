@@ -92,6 +92,7 @@ const App = () => (
                         <Route path="grades" element={<StudentGrades />} />
                         <Route path="messages" element={<StudentMessages />} />
                         <Route path="library" element={<StudentLibrary />} />
+                        <Route path="fees" element={<StudentFees />} />
                         <Route path="doubts" element={<StudentChat />} />
                         <Route path="chat" element={<StudentChat />} />
                         <Route
