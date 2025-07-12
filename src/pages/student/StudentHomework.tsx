@@ -279,7 +279,7 @@ const StudentHomework = () => {
             <div className="flex items-center space-x-2">
               <Clock className="h-5 w-5 text-yellow-600" />
               <div>
-                <p className="text-2xl font-bold">3</p>
+                <p className="text-2xl font-bold">{pendingCount}</p>
                 <p className="text-sm text-muted-foreground">Pending</p>
               </div>
             </div>
@@ -291,7 +291,7 @@ const StudentHomework = () => {
             <div className="flex items-center space-x-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
               <div>
-                <p className="text-2xl font-bold">4</p>
+                <p className="text-2xl font-bold">{submittedCount}</p>
                 <p className="text-sm text-muted-foreground">Submitted</p>
               </div>
             </div>
