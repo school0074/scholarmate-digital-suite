@@ -83,6 +83,57 @@ const AdminUsers = () => {
     loadUsers();
   }, []);
 
+  const handleCreateUser = async () => {
+    if (!newUserData.fullName || !newUserData.email) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setCreating(true);
+
+      // In a real application, you would create the user via Supabase Auth
+      // For now, we'll create a profile record directly
+      const { error } = await supabase.from("profiles").insert({
+        full_name: newUserData.fullName,
+        email: newUserData.email,
+        role: newUserData.role,
+        phone: newUserData.phone || null,
+        is_active: true,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "User created successfully",
+      });
+
+      // Reset form
+      setNewUserData({
+        fullName: "",
+        email: "",
+        role: "student",
+        phone: "",
+      });
+
+      await loadUsers();
+    } catch (error) {
+      console.error("Error creating user:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create user",
+        variant: "destructive",
+      });
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const loadUsers = async () => {
     try {
       setLoading(true);
@@ -205,7 +256,14 @@ const AdminUsers = () => {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
-                <Input id="fullName" placeholder="Enter full name" />
+                <Input
+                  id="fullName"
+                  placeholder="Enter full name"
+                  value={newUserData.fullName}
+                  onChange={(e) =>
+                    setNewUserData({ ...newUserData, fullName: e.target.value })
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -213,11 +271,20 @@ const AdminUsers = () => {
                   id="email"
                   type="email"
                   placeholder="Enter email address"
+                  value={newUserData.email}
+                  onChange={(e) =>
+                    setNewUserData({ ...newUserData, email: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
-                <Select>
+                <Select
+                  value={newUserData.role}
+                  onValueChange={(value) =>
+                    setNewUserData({ ...newUserData, role: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
@@ -230,7 +297,14 @@ const AdminUsers = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone (Optional)</Label>
-                <Input id="phone" placeholder="Enter phone number" />
+                <Input
+                  id="phone"
+                  placeholder="Enter phone number"
+                  value={newUserData.phone}
+                  onChange={(e) =>
+                    setNewUserData({ ...newUserData, phone: e.target.value })
+                  }
+                />
               </div>
               <Button
                 className="w-full"
