@@ -93,31 +93,58 @@ const TeacherDashboard = () => {
 
       if (!user) return;
 
-      // Load teacher's classes from database
-      const { data: teacherClasses, error: classesError } = await supabase
-        .from("classes")
+      // First, get the teacher's assigned classes through teacher_assignments
+      const { data: teacherAssignments, error: assignmentsError } = await supabase
+        .from("teacher_assignments")
         .select(
           `
-          id,
-          name,
-          section,
-          student_enrollments(count)
+          class_id,
+          classes!inner(
+            id,
+            name,
+            section
+          )
         `,
         )
         .eq("teacher_id", user.id);
 
-      if (classesError) {
-        console.error("Error loading classes:", classesError);
+      if (assignmentsError) {
+        console.error("Error loading teacher assignments:", assignmentsError);
       }
 
-      const formattedClasses: ClassInfo[] =
-        teacherClasses?.map((cls: any) => ({
+      // Get unique class IDs
+      const classIds = teacherAssignments?.map((assignment: any) => assignment.class_id) || [];
+      
+      // Get student counts for each class
+      const classesWithCounts = await Promise.all(
+        (teacherAssignments || []).map(async (assignment: any) => {
+          const { data: enrollmentCount } = await supabase
+            .from("student_enrollments")
+            .select("id", { count: "exact" })
+            .eq("class_id", assignment.class_id);
+
+          return {
+            id: assignment.classes.id,
+            name: assignment.classes.name,
+            section: assignment.classes.section,
+            studentCount: enrollmentCount?.length || 0,
+            subjects: [], // TODO: Load subjects separately if needed
+          };
+        })
+      );
+
+      // Remove duplicates based on class ID
+      const uniqueClasses = classesWithCounts.filter((cls, index, self) =>
+        index === self.findIndex((c) => c.id === cls.id)
+      );
+
+      const formattedClasses: ClassInfo[] = uniqueClasses.map((cls: any) => ({
           id: cls.id,
           name: cls.name,
           section: cls.section,
-          studentCount: cls.student_enrollments?.[0]?.count || 0,
+          studentCount: cls.studentCount,
           subjects: [], // TODO: Load subjects separately if needed
-        })) || [];
+        }));
 
       setClasses(formattedClasses);
 
@@ -181,27 +208,40 @@ const TeacherDashboard = () => {
         completedAssignments: completedAssignments?.length || 0,
       });
 
-      // Load recent activity from database
+      // Get homework IDs for this teacher first
+      const { data: teacherHomework } = await supabase
+        .from("homework")
+        .select("id")
+        .eq("assigned_by", user.id);
+
+      const homeworkIds = teacherHomework?.map((h) => h.id) || [];
+
+      // Load recent submissions with separate profile lookup
       const { data: recentSubmissions } = await supabase
         .from("student_submissions")
         .select(
           `
           id,
+          student_id,
           created_at,
-          homework(title),
-          student:profiles!student_id(full_name)
+          homework(title)
         `,
         )
-        .in(
-          "homework_id",
-          await supabase
-            .from("homework")
-            .select("id")
-            .eq("assigned_by", user.id)
-            .then((res) => res.data?.map((h) => h.id) || []),
-        )
+        .in("homework_id", homeworkIds)
         .order("created_at", { ascending: false })
         .limit(3);
+
+      // Get student profiles separately
+      const studentIds = recentSubmissions?.map((sub: any) => sub.student_id) || [];
+      const { data: studentProfiles } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", studentIds);
+
+      // Create a map for quick lookup
+      const profileMap = new Map(
+        studentProfiles?.map((profile: any) => [profile.id, profile.full_name]) || []
+      );
 
       const { data: recentHomework } = await supabase
         .from("homework")
@@ -214,11 +254,12 @@ const TeacherDashboard = () => {
 
       // Add recent submissions
       recentSubmissions?.forEach((submission: any) => {
+        const studentName = profileMap.get(submission.student_id) || "Unknown Student";
         activity.push({
           id: submission.id,
           type: "submission",
           title: "New Assignment Submission",
-          description: `${submission.homework?.title} submitted by ${submission.student?.full_name}`,
+          description: `${submission.homework?.title} submitted by ${studentName}`,
           time: getTimeAgo(submission.created_at),
           priority: "medium",
         });
