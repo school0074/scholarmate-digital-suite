@@ -223,12 +223,12 @@ const TeacherDashboard = () => {
           `
           id,
           student_id,
-          created_at,
+          submitted_at,
           homework(title)
         `,
         )
         .in("homework_id", homeworkIds)
-        .order("created_at", { ascending: false })
+        .order("submitted_at", { ascending: false })
         .limit(3);
 
       // Get student profiles separately
@@ -260,7 +260,7 @@ const TeacherDashboard = () => {
           type: "submission",
           title: "New Assignment Submission",
           description: `${submission.homework?.title} submitted by ${studentName}`,
-          time: getTimeAgo(submission.created_at),
+          time: getTimeAgo(submission.submitted_at),
           priority: "medium",
         });
       });
