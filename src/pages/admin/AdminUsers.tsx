@@ -85,10 +85,11 @@ const AdminUsers = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      const usersData = data?.map((user: any) => ({
-        ...user,
-        is_active: true // Default active status
-      })) || [];
+      const usersData =
+        data?.map((user: any) => ({
+          ...user,
+          is_active: user.is_active !== false, // Default true if not set
+        })) || [];
       setUsers(usersData);
     } catch (error) {
       console.error("Error loading users:", error);
@@ -104,9 +105,10 @@ const AdminUsers = () => {
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
+      // Update the is_active status instead of changing role
       const { error } = await supabase
         .from("profiles")
-        .update({ role: currentStatus ? "student" : "admin" })
+        .update({ is_active: !currentStatus })
         .eq("id", userId);
 
       if (error) throw error;
