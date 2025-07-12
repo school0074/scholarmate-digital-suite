@@ -18,6 +18,8 @@ import {
   Medal,
   ChevronRight,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SubjectGrade {
   id: string;
@@ -48,22 +50,19 @@ interface TermReport {
 
 const StudentGrades = () => {
   const { toast } = useToast();
-
-  // Mock student profile data
-  const mockProfile = {
-    id: "student-123",
-    full_name: "John Doe",
-  };
+  const { user, profile } = useAuth();
   const [currentTerm, setCurrentTerm] = useState<TermReport | null>(null);
   const [previousTerms, setPreviousTerms] = useState<TermReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTerm, setSelectedTerm] = useState("current");
 
   useEffect(() => {
-    loadMockGradesData();
-  }, []);
+    if (user && profile) {
+      loadGradesData();
+    }
+  }, [user, profile]);
 
-  const loadMockGradesData = async () => {
+  const loadGradesData = async () => {
     try {
       setLoading(true);
 
