@@ -162,9 +162,7 @@ const StudentExams = () => {
         })) || [];
 
         setExamResults(formattedResults);
-      }
-        {
-          id: "1",
+            }
           title: "Mathematics Mid-Term Exam",
           description: "Comprehensive exam covering Algebra and Trigonometry",
           exam_date: format(addDays(today, 5), "yyyy-MM-dd"),
