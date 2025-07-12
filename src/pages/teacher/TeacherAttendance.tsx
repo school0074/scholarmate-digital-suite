@@ -28,6 +28,8 @@ import {
   FileText,
 } from "lucide-react";
 import { format, isToday, subDays } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Class {
   id: string;
@@ -59,12 +61,7 @@ interface AttendanceStats {
 
 const TeacherAttendance = () => {
   const { toast } = useToast();
-
-  // Mock teacher profile data
-  const mockProfile = {
-    id: "teacher-123",
-    full_name: "Prof. Sarah Johnson",
-  };
+  const { user, profile } = useAuth();
   const [classes, setClasses] = useState<Class[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [attendance, setAttendance] = useState<
@@ -85,8 +82,10 @@ const TeacherAttendance = () => {
   );
 
   useEffect(() => {
-    loadMockTeacherClasses();
-  }, []);
+    if (user && profile) {
+      loadTeacherClasses();
+    }
+  }, [user, profile]);
 
   useEffect(() => {
     if (selectedClass && selectedDate) {
@@ -94,38 +93,42 @@ const TeacherAttendance = () => {
     }
   }, [selectedClass, selectedDate]);
 
-  const loadMockTeacherClasses = async () => {
+  const loadTeacherClasses = async () => {
     try {
       setLoading(true);
 
-      // Simulate loading delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      if (!user) return;
 
-      const mockClasses: Class[] = [
-        {
-          id: "1",
-          name: "Grade 10",
-          section: "A",
-          studentCount: 32,
-        },
-        {
-          id: "2",
-          name: "Grade 10",
-          section: "B",
-          studentCount: 28,
-        },
-        {
-          id: "3",
-          name: "Grade 9",
-          section: "A",
-          studentCount: 30,
-        },
-      ];
+      // Load teacher's classes from database
+      const { data: teacherClasses, error } = await supabase
+        .from("classes")
+        .select(
+          `
+          id,
+          name,
+          section,
+          student_enrollments(count)
+        `,
+        )
+        .eq("teacher_id", user.id);
 
-      setClasses(mockClasses);
+      if (error) {
+        console.error("Error loading classes:", error);
+        return;
+      }
 
-      if (mockClasses.length > 0 && !selectedClass) {
-        setSelectedClass(mockClasses[0].id);
+      const formattedClasses: Class[] =
+        teacherClasses?.map((cls: any) => ({
+          id: cls.id,
+          name: cls.name,
+          section: cls.section,
+          studentCount: cls.student_enrollments?.[0]?.count || 0,
+        })) || [];
+
+      setClasses(formattedClasses);
+
+      if (formattedClasses.length > 0 && !selectedClass) {
+        setSelectedClass(formattedClasses[0].id);
       }
     } catch (error) {
       console.error("Error loading classes:", error);
@@ -145,62 +148,72 @@ const TeacherAttendance = () => {
     try {
       setLoading(true);
 
-      // Simulate loading delay
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      // Load students enrolled in the selected class
+      const { data: studentsData, error: studentsError } = await supabase
+        .from("student_enrollments")
+        .select(
+          `
+          student_id,
+          profiles!student_enrollments_student_id_fkey(
+            id,
+            full_name,
+            roll_number,
+            avatar_url
+          )
+        `,
+        )
+        .eq("class_id", selectedClass);
 
-      // Generate mock student data based on selected class
-      const selectedClassInfo = classes.find((c) => c.id === selectedClass);
-      const studentCount = selectedClassInfo?.studentCount || 30;
-
-      const mockStudents: Student[] = [];
-      for (let i = 1; i <= studentCount; i++) {
-        mockStudents.push({
-          id: `student-${selectedClass}-${i}`,
-          full_name: `Student ${i.toString().padStart(2, "0")}`,
-          roll_number: `${selectedClassInfo?.name?.replace(" ", "")}${selectedClassInfo?.section}${i.toString().padStart(3, "0")}`,
-          avatar_url: undefined,
-        });
+      if (studentsError) {
+        console.error("Error loading students:", studentsError);
+        return;
       }
 
-      setStudents(mockStudents);
+      const formattedStudents: Student[] =
+        studentsData?.map((enrollment: any) => ({
+          id: enrollment.profiles.id,
+          full_name: enrollment.profiles.full_name || "Unknown Student",
+          roll_number: enrollment.profiles.roll_number || "N/A",
+          avatar_url: enrollment.profiles.avatar_url,
+        })) || [];
 
-      // Initialize attendance state with some realistic patterns
+      setStudents(formattedStudents);
+
+      // Load existing attendance records for the selected date
+      const { data: existingAttendance } = await supabase
+        .from("attendance")
+        .select("student_id, status, notes")
+        .eq("class_id", selectedClass)
+        .eq("date", selectedDate);
+
+      // Initialize attendance state
       const attendanceMap: Record<string, AttendanceRecord> = {};
       const today = new Date().toISOString().split("T")[0];
-      const isToday = selectedDate === today;
+      const isTodaySelected = selectedDate === today;
 
-      mockStudents.forEach((student, index) => {
-        let status: "present" | "absent" | "late";
+      formattedStudents.forEach((student) => {
+        const existingRecord = existingAttendance?.find(
+          (record) => record.student_id === student.id,
+        );
 
-        if (isToday) {
-          // For today, start with all present
-          status = "present";
+        if (existingRecord) {
+          attendanceMap[student.id] = {
+            student_id: student.id,
+            status: existingRecord.status,
+            notes: existingRecord.notes || "",
+          };
         } else {
-          // For other dates, use realistic attendance patterns
-          const rand = Math.random();
-          if (rand < 0.85) {
-            status = "present";
-          } else if (rand < 0.92) {
-            status = "late";
-          } else {
-            status = "absent";
-          }
+          // Default to present for new records
+          attendanceMap[student.id] = {
+            student_id: student.id,
+            status: "present",
+            notes: "",
+          };
         }
-
-        attendanceMap[student.id] = {
-          student_id: student.id,
-          status,
-          notes:
-            status === "absent"
-              ? "Sick leave"
-              : status === "late"
-                ? "Traffic delay"
-                : "",
-        };
       });
 
       setAttendance(attendanceMap);
-      calculateStats(attendanceMap, mockStudents.length);
+      calculateStats(attendanceMap, formattedStudents.length);
     } catch (error) {
       console.error("Error loading students and attendance:", error);
       toast({
@@ -281,11 +294,26 @@ const TeacherAttendance = () => {
     try {
       setSaving(true);
 
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Save attendance to database
+      const attendanceRecords = Object.values(attendance).map((record) => ({
+        student_id: record.student_id,
+        class_id: selectedClass,
+        date: selectedDate,
+        status: record.status,
+        notes: record.notes || null,
+        teacher_id: user?.id,
+      }));
 
-      // In a real app, this would save to the database
-      // For now, we'll just show success message
+      // Use upsert to handle existing records
+      const { error } = await supabase
+        .from("attendance")
+        .upsert(attendanceRecords, {
+          onConflict: "student_id,class_id,date",
+        });
+
+      if (error) {
+        throw error;
+      }
       toast({
         title: "Success",
         description: "Attendance saved successfully",
