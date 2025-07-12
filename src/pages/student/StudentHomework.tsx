@@ -211,7 +211,9 @@ const StudentHomework = () => {
     }
   };
 
-  const getDaysUntilDue = (dueDate: Date) => {
+  const getDaysUntilDue = (dueDateString: string | null) => {
+    if (!dueDateString) return null;
+    const dueDate = new Date(dueDateString);
     const today = new Date();
     const diffTime = dueDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -223,6 +225,27 @@ const StudentHomework = () => {
       hw.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       hw.subject.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  const pendingCount = homeworkList.filter(
+    (hw) => hw.status === "pending",
+  ).length;
+  const submittedCount = homeworkList.filter(
+    (hw) => hw.status === "submitted",
+  ).length;
+  const overdueCount = homeworkList.filter(
+    (hw) => hw.status === "overdue",
+  ).length;
+  const gradedCount = homeworkList.filter(
+    (hw) => hw.status === "graded",
+  ).length;
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
@@ -242,7 +265,7 @@ const StudentHomework = () => {
             <div className="flex items-center space-x-2">
               <FileText className="h-5 w-5 text-blue-600" />
               <div>
-                <p className="text-2xl font-bold">8</p>
+                <p className="text-2xl font-bold">{homeworkList.length}</p>
                 <p className="text-sm text-muted-foreground">
                   Total Assignments
                 </p>
