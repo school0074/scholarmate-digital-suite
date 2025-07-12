@@ -70,22 +70,21 @@ const HeroSection = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-8 sm:mb-12 px-4 sm:px-0">
             <Link to="/auth" className="w-full sm:w-auto">
               <Button
-                variant="hero"
-                size="xl"
-                className="shadow-2xl w-full sm:w-auto"
+                size="lg"
+                className="bg-white text-primary hover:bg-white/90 shadow-2xl w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4"
               >
-                Get Started Free
+                Start Learning Today
                 <ArrowRight className="h-4 sm:h-5 w-4 sm:w-5 ml-2" />
               </Button>
             </Link>
-            <Link to="/demo" className="w-full sm:w-auto">
+            <Link to="/auth" className="w-full sm:w-auto">
               <Button
                 variant="outline"
-                size="xl"
-                className="bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm w-full sm:w-auto"
+                size="lg"
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4"
               >
-                <Play className="h-4 sm:h-5 w-4 sm:w-5 mr-2" />
-                Try Student Demo
+                <BookOpen className="h-4 sm:h-5 w-4 sm:w-5 mr-2" />
+                Teacher Portal
               </Button>
             </Link>
           </div>

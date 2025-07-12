@@ -135,6 +135,181 @@ export type Database = {
           },
         ]
       }
+      backup_configurations: {
+        Row: {
+          auto_backup: boolean | null
+          backup_frequency: string | null
+          backup_type: string | null
+          created_at: string
+          id: string
+          last_backup_at: string | null
+          storage_used_mb: number | null
+          user_id: string | null
+        }
+        Insert: {
+          auto_backup?: boolean | null
+          backup_frequency?: string | null
+          backup_type?: string | null
+          created_at?: string
+          id?: string
+          last_backup_at?: string | null
+          storage_used_mb?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          auto_backup?: boolean | null
+          backup_frequency?: string | null
+          backup_type?: string | null
+          created_at?: string
+          id?: string
+          last_backup_at?: string | null
+          storage_used_mb?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      birthday_reminders: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          reminder_date: string
+          sent: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          reminder_date: string
+          sent?: boolean | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          reminder_date?: string
+          sent?: boolean | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      book_borrows: {
+        Row: {
+          book_id: string | null
+          borrowed_at: string
+          due_date: string
+          id: string
+          returned_at: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          book_id?: string | null
+          borrowed_at?: string
+          due_date: string
+          id?: string
+          returned_at?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          book_id?: string | null
+          borrowed_at?: string
+          due_date?: string
+          id?: string
+          returned_at?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_borrows_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "library_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bus_stops: {
+        Row: {
+          bus_id: string | null
+          created_at: string
+          estimated_time: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          stop_order: number | null
+        }
+        Insert: {
+          bus_id?: string | null
+          created_at?: string
+          estimated_time?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          stop_order?: number | null
+        }
+        Update: {
+          bus_id?: string | null
+          created_at?: string
+          estimated_time?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          stop_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bus_stops_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buses: {
+        Row: {
+          active: boolean | null
+          bus_number: string
+          capacity: number | null
+          created_at: string
+          driver_name: string | null
+          driver_phone: string | null
+          gps_device_id: string | null
+          id: string
+          route_name: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          bus_number: string
+          capacity?: number | null
+          created_at?: string
+          driver_name?: string | null
+          driver_phone?: string | null
+          gps_device_id?: string | null
+          id?: string
+          route_name?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          bus_number?: string
+          capacity?: number | null
+          created_at?: string
+          driver_name?: string | null
+          driver_phone?: string | null
+          gps_device_id?: string | null
+          id?: string
+          route_name?: string | null
+        }
+        Relationships: []
+      }
       classes: {
         Row: {
           academic_year: string | null
@@ -175,6 +350,218 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      counseling_sessions: {
+        Row: {
+          counselor_id: string | null
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          notes: string | null
+          session_date: string
+          session_type: string | null
+          status: string | null
+          student_id: string | null
+        }
+        Insert: {
+          counselor_id?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          session_date: string
+          session_type?: string | null
+          status?: string | null
+          student_id?: string | null
+        }
+        Update: {
+          counselor_id?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          session_date?: string
+          session_type?: string | null
+          status?: string | null
+          student_id?: string | null
+        }
+        Relationships: []
+      }
+      course_lessons: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          is_free: boolean | null
+          lesson_order: number | null
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_free?: boolean | null
+          lesson_order?: number | null
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_free?: boolean | null
+          lesson_order?: number | null
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_lessons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_progress: {
+        Row: {
+          completed: boolean | null
+          completion_percentage: number | null
+          course_id: string | null
+          created_at: string
+          id: string
+          last_watched_at: string | null
+          lesson_id: string | null
+          student_id: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          completion_percentage?: number | null
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          last_watched_at?: string | null
+          lesson_id?: string | null
+          student_id?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          completion_percentage?: number | null
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          last_watched_at?: string | null
+          lesson_id?: string | null
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_progress_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "course_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          description: string | null
+          difficulty_level: string | null
+          duration_minutes: number | null
+          id: string
+          instructor_id: string | null
+          is_published: boolean | null
+          subject_id: string | null
+          thumbnail_url: string | null
+          title: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instructor_id?: string | null
+          is_published?: boolean | null
+          subject_id?: string | null
+          thumbnail_url?: string | null
+          title: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instructor_id?: string | null
+          is_published?: boolean | null
+          subject_id?: string | null
+          thumbnail_url?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courses_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_quotes: {
+        Row: {
+          author: string | null
+          category: string | null
+          created_at: string
+          date_featured: string | null
+          id: string
+          quote_text: string
+        }
+        Insert: {
+          author?: string | null
+          category?: string | null
+          created_at?: string
+          date_featured?: string | null
+          id?: string
+          quote_text: string
+        }
+        Update: {
+          author?: string | null
+          category?: string | null
+          created_at?: string
+          date_featured?: string | null
+          id?: string
+          quote_text?: string
+        }
+        Relationships: []
       }
       events: {
         Row: {
@@ -448,6 +835,48 @@ export type Database = {
           },
         ]
       }
+      library_books: {
+        Row: {
+          author: string
+          available_copies: number | null
+          category: string | null
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          digital_copy_url: string | null
+          id: string
+          isbn: string | null
+          title: string
+          total_copies: number | null
+        }
+        Insert: {
+          author: string
+          available_copies?: number | null
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          digital_copy_url?: string | null
+          id?: string
+          isbn?: string | null
+          title: string
+          total_copies?: number | null
+        }
+        Update: {
+          author?: string
+          available_copies?: number | null
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          digital_copy_url?: string | null
+          id?: string
+          isbn?: string | null
+          title?: string
+          total_copies?: number | null
+        }
+        Relationships: []
+      }
       marks: {
         Row: {
           created_at: string
@@ -533,6 +962,33 @@ export type Database = {
           },
         ]
       }
+      notification_tokens: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          device_type: string | null
+          id: string
+          token: string
+          user_id: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          token: string
+          user_id?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          token?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -560,6 +1016,74 @@ export type Database = {
           title?: string
           type?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      offline_notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          subject_id: string | null
+          synced: boolean | null
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          subject_id?: string | null
+          synced?: boolean | null
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          subject_id?: string | null
+          synced?: boolean | null
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offline_notes_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parent_child_relationships: {
+        Row: {
+          child_id: string | null
+          created_at: string
+          id: string
+          parent_id: string | null
+          primary_contact: boolean | null
+          relationship_type: string | null
+        }
+        Insert: {
+          child_id?: string | null
+          created_at?: string
+          id?: string
+          parent_id?: string | null
+          primary_contact?: boolean | null
+          relationship_type?: string | null
+        }
+        Update: {
+          child_id?: string | null
+          created_at?: string
+          id?: string
+          parent_id?: string | null
+          primary_contact?: boolean | null
+          relationship_type?: string | null
         }
         Relationships: []
       }
@@ -771,6 +1295,95 @@ export type Database = {
         }
         Relationships: []
       }
+      student_analytics: {
+        Row: {
+          assignment_completion_rate: number | null
+          attendance_percentage: number | null
+          average_marks: number | null
+          created_at: string
+          id: string
+          month_year: string
+          participation_score: number | null
+          quiz_performance: number | null
+          student_id: string | null
+          subject_id: string | null
+        }
+        Insert: {
+          assignment_completion_rate?: number | null
+          attendance_percentage?: number | null
+          average_marks?: number | null
+          created_at?: string
+          id?: string
+          month_year: string
+          participation_score?: number | null
+          quiz_performance?: number | null
+          student_id?: string | null
+          subject_id?: string | null
+        }
+        Update: {
+          assignment_completion_rate?: number | null
+          attendance_percentage?: number | null
+          average_marks?: number | null
+          created_at?: string
+          id?: string
+          month_year?: string
+          participation_score?: number | null
+          quiz_performance?: number | null
+          student_id?: string | null
+          subject_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_analytics_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_bus_assignments: {
+        Row: {
+          active: boolean | null
+          bus_id: string | null
+          bus_stop_id: string | null
+          created_at: string
+          id: string
+          student_id: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          bus_id?: string | null
+          bus_stop_id?: string | null
+          created_at?: string
+          id?: string
+          student_id?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          bus_id?: string | null
+          bus_stop_id?: string | null
+          created_at?: string
+          id?: string
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_bus_assignments_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_bus_assignments_bus_stop_id_fkey"
+            columns: ["bus_stop_id"]
+            isOneToOne: false
+            referencedRelation: "bus_stops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_enrollments: {
         Row: {
           class_id: string | null
@@ -808,6 +1421,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      student_qr_codes: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          last_scanned_at: string | null
+          qr_code_data: string
+          scan_count: number | null
+          student_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          last_scanned_at?: string | null
+          qr_code_data: string
+          scan_count?: number | null
+          student_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          last_scanned_at?: string | null
+          qr_code_data?: string
+          scan_count?: number | null
+          student_id?: string | null
+        }
+        Relationships: []
       }
       student_submissions: {
         Row: {
@@ -1014,6 +1657,50 @@ export type Database = {
           used?: boolean | null
         }
         Relationships: []
+      }
+      teacher_performance: {
+        Row: {
+          assignments_graded: number | null
+          class_id: string | null
+          classes_conducted: number | null
+          created_at: string
+          id: string
+          month_year: string
+          response_time_hours: number | null
+          student_feedback_score: number | null
+          teacher_id: string | null
+        }
+        Insert: {
+          assignments_graded?: number | null
+          class_id?: string | null
+          classes_conducted?: number | null
+          created_at?: string
+          id?: string
+          month_year: string
+          response_time_hours?: number | null
+          student_feedback_score?: number | null
+          teacher_id?: string | null
+        }
+        Update: {
+          assignments_graded?: number | null
+          class_id?: string | null
+          classes_conducted?: number | null
+          created_at?: string
+          id?: string
+          month_year?: string
+          response_time_hours?: number | null
+          student_feedback_score?: number | null
+          teacher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_performance_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       timetable: {
         Row: {
