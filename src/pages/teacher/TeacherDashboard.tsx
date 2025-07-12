@@ -19,6 +19,8 @@ import {
   Eye,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TeacherStats {
   totalStudents: number;
@@ -48,14 +50,7 @@ interface RecentActivity {
 
 const TeacherDashboard = () => {
   const { toast } = useToast();
-
-  // Mock teacher profile data
-  const mockProfile = {
-    id: "teacher-123",
-    full_name: "Prof. Sarah Johnson",
-    email: "sarah.johnson@school.edu",
-    role: "teacher" as const,
-  };
+  const { user, profile } = useAuth();
   const [stats, setStats] = useState<TeacherStats>({
     totalStudents: 0,
     totalClasses: 0,
@@ -69,101 +64,166 @@ const TeacherDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadMockTeacherData();
-  }, []);
+    if (user && profile) {
+      loadTeacherData();
+    }
+  }, [user, profile]);
 
-  const loadMockTeacherData = async () => {
+  const loadTeacherData = async () => {
     try {
       setLoading(true);
 
-      // Simulate loading delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      if (!user) return;
 
-      // Mock class data
-      const mockClasses: ClassInfo[] = [
-        {
-          id: "1",
-          name: "Grade 10",
-          section: "A",
-          studentCount: 32,
-          subjects: ["Mathematics", "Physics"],
-        },
-        {
-          id: "2",
-          name: "Grade 10",
-          section: "B",
-          studentCount: 28,
-          subjects: ["Mathematics"],
-        },
-        {
-          id: "3",
-          name: "Grade 9",
-          section: "A",
-          studentCount: 30,
-          subjects: ["Physics", "Science"],
-        },
-      ];
+      // Load teacher's classes from database
+      const { data: teacherClasses, error: classesError } = await supabase
+        .from("classes")
+        .select(
+          `
+          id,
+          name,
+          section,
+          student_enrollments(count),
+          class_subjects(subjects(name))
+        `,
+        )
+        .eq("teacher_id", user.id);
 
-      setClasses(mockClasses);
+      if (classesError) {
+        console.error("Error loading classes:", classesError);
+      }
 
-      const totalStudents = mockClasses.reduce(
+      const formattedClasses: ClassInfo[] =
+        teacherClasses?.map((cls: any) => ({
+          id: cls.id,
+          name: cls.name,
+          section: cls.section,
+          studentCount: cls.student_enrollments?.[0]?.count || 0,
+          subjects:
+            cls.class_subjects?.map((cs: any) => cs.subjects?.name) || [],
+        })) || [];
+
+      setClasses(formattedClasses);
+
+      // Calculate stats from real data
+      const totalStudents = formattedClasses.reduce(
         (sum, cls) => sum + cls.studentCount,
         0,
       );
 
-      // Set mock stats
+      // Get pending homework submissions for grading
+      const { data: pendingSubmissions } = await supabase
+        .from("student_submissions")
+        .select("id")
+        .is("grade", null)
+        .in(
+          "homework_id",
+          await supabase
+            .from("homework")
+            .select("id")
+            .eq("teacher_id", user.id)
+            .then((res) => res.data?.map((h) => h.id) || []),
+        );
+
+      // Get upcoming lessons/classes
+      const { data: upcomingLessons } = await supabase
+        .from("timetable")
+        .select("id")
+        .eq("teacher_id", user.id)
+        .gte("date", new Date().toISOString())
+        .lt(
+          "date",
+          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        );
+
+      // Get unread messages
+      const { data: unreadMessages } = await supabase
+        .from("messages")
+        .select("id")
+        .eq("recipient_id", user.id)
+        .eq("read", false);
+
+      // Get completed assignments (graded)
+      const { data: completedAssignments } = await supabase
+        .from("student_submissions")
+        .select("id")
+        .not("grade", "is", null)
+        .in(
+          "homework_id",
+          await supabase
+            .from("homework")
+            .select("id")
+            .eq("teacher_id", user.id)
+            .then((res) => res.data?.map((h) => h.id) || []),
+        );
+
       setStats({
         totalStudents,
-        totalClasses: mockClasses.length,
-        pendingGrading: 15,
-        upcomingLessons: 12,
-        unreadMessages: 3,
-        completedAssignments: 48,
+        totalClasses: formattedClasses.length,
+        pendingGrading: pendingSubmissions?.length || 0,
+        upcomingLessons: upcomingLessons?.length || 0,
+        unreadMessages: unreadMessages?.length || 0,
+        completedAssignments: completedAssignments?.length || 0,
       });
 
-      // Load mock recent activity
-      setRecentActivity([
-        {
-          id: "1",
+      // Load recent activity from database
+      const { data: recentSubmissions } = await supabase
+        .from("student_submissions")
+        .select(
+          `
+          id,
+          created_at,
+          homework(title),
+          profiles(full_name)
+        `,
+        )
+        .in(
+          "homework_id",
+          await supabase
+            .from("homework")
+            .select("id")
+            .eq("teacher_id", user.id)
+            .then((res) => res.data?.map((h) => h.id) || []),
+        )
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      const { data: recentHomework } = await supabase
+        .from("homework")
+        .select("id, title, due_date, created_at")
+        .eq("teacher_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(2);
+
+      const activity: RecentActivity[] = [];
+
+      // Add recent submissions
+      recentSubmissions?.forEach((submission: any) => {
+        activity.push({
+          id: submission.id,
           type: "submission",
           title: "New Assignment Submission",
-          description: "Mathematics homework submitted by Emma Wilson",
-          time: "5 minutes ago",
+          description: `${submission.homework?.title} submitted by ${submission.profiles?.full_name}`,
+          time: getTimeAgo(submission.created_at),
           priority: "medium",
-        },
-        {
-          id: "2",
+        });
+      });
+
+      // Add recent homework
+      recentHomework?.forEach((homework: any) => {
+        const isOverdue =
+          homework.due_date && new Date(homework.due_date) < new Date();
+        activity.push({
+          id: homework.id,
           type: "homework",
-          title: "Assignment Due Tomorrow",
-          description: "Physics lab report due for Grade 10-A",
-          time: "2 hours ago",
-          priority: "high",
-        },
-        {
-          id: "3",
-          type: "message",
-          title: "Parent Inquiry",
-          description: "Message from David Smith's parent about homework",
-          time: "3 hours ago",
-          priority: "medium",
-        },
-        {
-          id: "4",
-          type: "attendance",
-          title: "Attendance Marked",
-          description: "Attendance for Grade 9-A has been marked",
-          time: "1 day ago",
-          priority: "low",
-        },
-        {
-          id: "5",
-          type: "submission",
-          title: "Multiple Submissions",
-          description: "5 new submissions for Science project",
-          time: "1 day ago",
-          priority: "medium",
-        },
-      ]);
+          title: isOverdue ? "Assignment Overdue" : "Assignment Created",
+          description: homework.title,
+          time: getTimeAgo(homework.created_at),
+          priority: isOverdue ? "high" : "low",
+        });
+      });
+
+      setRecentActivity(activity.slice(0, 5));
     } catch (error) {
       console.error("Error loading teacher data:", error);
       toast({
@@ -266,10 +326,10 @@ const TeacherDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">
-            Welcome back, {mockProfile.full_name}!
+          <h1 className="text-2xl sm:text-3xl font-bold">
+            Welcome back, {profile?.full_name || "Teacher"}!
           </h1>
           <p className="text-muted-foreground">
             Manage your classes and track student progress
