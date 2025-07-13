@@ -126,40 +126,23 @@ const StudentGrades = () => {
         throw new Error("Failed to load exams data");
       }
 
-      // Get exam results for this student
-      const { data: results, error: resultsError } = await supabase
-        .from("exam_results")
-        .select(
-          `
-          id,
-          exam_id,
-          student_id,
-          marks_obtained,
-          graded_at,
-          graded_by,
-          exams (
-            id,
-            title,
-            subject,
-            type,
-            total_marks,
-            date,
-            profiles!exams_teacher_id_fkey (
-              full_name
-            )
-          )
-        `,
-        )
+      // Get marks for this student
+      const { data: marks, error: marksError } = await supabase
+        .from("marks")
+        .select(`
+          *,
+          subjects (name)
+        `)
         .eq("student_id", profile.id);
 
-      if (resultsError) {
-        console.error("Error fetching results:", resultsError);
-        throw new Error("Failed to load exam results");
+      if (marksError) {
+        console.error("Error fetching marks:", marksError);
+        throw new Error("Failed to load marks data");
       }
 
       // Get attendance percentage
       const { data: attendanceData, error: attendanceError } = await supabase
-        .from("attendance_records")
+        .from("attendance")
         .select("status")
         .eq("student_id", profile.id);
 
@@ -188,36 +171,35 @@ const StudentGrades = () => {
 
       const totalStudents = classStudents?.length || 1;
 
-      // Group results by subject
+      // Group marks by subject
       const subjectResults =
-        results?.reduce(
-          (acc, result) => {
-            if (!result.exams) return acc;
+        marks?.reduce(
+          (acc, mark) => {
+            if (!mark.subjects) return acc;
 
-            const subject = result.exams.subject;
+            const subject = mark.subjects.name;
             if (!acc[subject]) {
               acc[subject] = {
                 subject_name: subject,
                 subject_code: subject.toUpperCase().substring(0, 6) + "101",
                 marks: [],
-                teacher_name:
-                  result.exams.profiles?.full_name || "Unknown Teacher",
+                teacher_name: "Subject Teacher",
               };
             }
 
             const percentage =
-              result.marks_obtained && result.exams.total_marks
+              mark.marks_obtained && mark.total_marks
                 ? Math.round(
-                    (result.marks_obtained / result.exams.total_marks) * 100,
+                    (mark.marks_obtained / mark.total_marks) * 100,
                   )
                 : 0;
 
             acc[subject].marks.push({
-              exam_type: result.exams.type || result.exams.title,
-              marks_obtained: result.marks_obtained || 0,
-              total_marks: result.exams.total_marks || 0,
+              exam_type: mark.exam_type,
+              marks_obtained: mark.marks_obtained || 0,
+              total_marks: mark.total_marks || 0,
               percentage,
-              date: result.exams.date || "",
+              date: mark.exam_date || mark.created_at,
             });
 
             return acc;
