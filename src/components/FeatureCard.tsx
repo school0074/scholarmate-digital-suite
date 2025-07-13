@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface FeatureCardProps {
   icon: string;
@@ -103,13 +104,15 @@ const FeatureCard = ({
         </div>
 
         {/* CTA */}
-        <Button
-          variant="outline"
-          className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300"
-        >
-          Explore {title}
-          <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-        </Button>
+        <Link to="/auth">
+          <Button
+            variant="outline"
+            className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300"
+          >
+            Get Started
+            <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </Link>
       </div>
     </Card>
   );

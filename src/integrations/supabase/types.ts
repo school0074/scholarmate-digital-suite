@@ -602,6 +602,72 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_results: {
+        Row: {
+          created_at: string
+          exam_id: string | null
+          graded_at: string | null
+          graded_by: string | null
+          id: string
+          marks_obtained: number | null
+          student_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          exam_id?: string | null
+          graded_at?: string | null
+          graded_by?: string | null
+          id?: string
+          marks_obtained?: number | null
+          student_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          exam_id?: string | null
+          graded_at?: string | null
+          graded_by?: string | null
+          id?: string
+          marks_obtained?: number | null
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_results_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_results_graded_by_fkey"
+            columns: ["graded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_results_graded_by_fkey"
+            columns: ["graded_by"]
+            isOneToOne: false
+            referencedRelation: "student_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_results_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_results_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exams: {
         Row: {
           class_id: string | null
@@ -658,6 +724,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fee_types: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          due_frequency: string | null
+          id: string
+          is_recurring: boolean | null
+          name: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          due_frequency?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          name: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          due_frequency?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          name?: string
+        }
+        Relationships: []
       }
       fees: {
         Row: {
@@ -1755,7 +1851,95 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      attendance_records: {
+        Row: {
+          class_id: string | null
+          created_at: string | null
+          date: string | null
+          id: string | null
+          marked_by: string | null
+          notes: string | null
+          status: string | null
+          student_id: string | null
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string | null
+          date?: string | null
+          id?: string | null
+          marked_by?: string | null
+          notes?: string | null
+          status?: string | null
+          student_id?: string | null
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string | null
+          date?: string | null
+          id?: string | null
+          marked_by?: string | null
+          notes?: string | null
+          status?: string | null
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_profiles: {
+        Row: {
+          address: string | null
+          avatar_url: string | null
+          blood_group: string | null
+          created_at: string | null
+          date_of_birth: string | null
+          email: string | null
+          emergency_contact: string | null
+          full_name: string | null
+          id: string | null
+          parent_name: string | null
+          parent_phone: string | null
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          avatar_url?: string | null
+          blood_group?: never
+          created_at?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          emergency_contact?: string | null
+          full_name?: string | null
+          id?: string | null
+          parent_name?: string | null
+          parent_phone?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          avatar_url?: string | null
+          blood_group?: never
+          created_at?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          emergency_contact?: string | null
+          full_name?: string | null
+          id?: string | null
+          parent_name?: string | null
+          parent_phone?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_role: {
