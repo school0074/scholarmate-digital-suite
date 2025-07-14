@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -11,24 +12,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
+  BookOpen,
   Plus,
-  FileText,
   Calendar,
+  Clock,
   Users,
-  Eye,
+  CheckCircle,
+  AlertCircle,
   Edit,
   Trash2,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  Download,
-  Upload,
+  FileText,
 } from "lucide-react";
-import { format, isAfter, isBefore } from "date-fns";
+import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -48,105 +47,105 @@ interface Subject {
 interface Homework {
   id: string;
   title: string;
-  description: string;
-  due_date: string;
-  subject_name: string;
-  class_name: string;
-  class_section: string;
-  submissionCount: number;
-  totalStudents: number;
+  description: string | null;
+  due_date: string | null;
+  class_id: string | null;
+  subject_id: string | null;
+  assigned_by: string | null;
   created_at: string;
+  updated_at: string;
+}
+
+interface HomeworkSubmission {
+  id: string;
+  homework_id: string;
+  student_id: string;
+  submission_text: string | null;
+  file_urls: string[] | null;
+  submitted_at: string;
+  graded: boolean;
+  grade: number | null;
+  feedback: string | null;
 }
 
 const TeacherHomework = () => {
   const { toast } = useToast();
   const { user, profile } = useAuth();
+  const [homework, setHomework] = useState<Homework[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [homework, setHomework] = useState<Homework[]>([]);
+  const [submissions, setSubmissions] = useState<HomeworkSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-
-  // Form state
-  const [formData, setFormData] = useState({
+  const [selectedHomework, setSelectedHomework] = useState<Homework | null>(null);
+  
+  const [newHomework, setNewHomework] = useState({
     title: "",
     description: "",
+    dueDate: "",
     classId: "",
     subjectId: "",
-    dueDate: "",
   });
 
   useEffect(() => {
     if (user && profile) {
-      loadTeacherData();
+      loadData();
     }
   }, [user, profile]);
 
-  const loadTeacherData = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
 
       if (!user) return;
 
-      // Load teacher's classes from database
-      const { data: teacherClasses, error: classesError } = await supabase
+      // Load teacher's classes
+      const { data: classData, error: classError } = await supabase
         .from("classes")
-        .select(
-          `
-          id,
-          name,
-          section,
-          student_enrollments(count)
-        `,
-        )
-        .eq("teacher_id", user.id);
+        .select("*")
+        .order("name");
 
-      if (classesError) {
-        console.error("Error loading classes:", classesError);
+      if (classError) {
+        console.error("Error loading classes:", classError);
       }
 
-      // Load subjects that the teacher teaches
-      const { data: teacherSubjects, error: subjectsError } = await supabase
+      // Load subjects
+      const { data: subjectsData, error: subjectsError } = await supabase
         .from("subjects")
-        .select("id, name, code")
-        .in(
-          "id",
-          await supabase
-            .from("class_subjects")
-            .select("subject_id")
-            .eq("teacher_id", user.id)
-            .then((res) => res.data?.map((cs) => cs.subject_id) || []),
-        );
+        .select("id, name, code");
 
       if (subjectsError) {
         console.error("Error loading subjects:", subjectsError);
       }
 
       const formattedClasses: Class[] =
-        teacherClasses?.map((cls: any) => ({
+        classData?.map((cls: any) => ({
           id: cls.id,
           name: cls.name,
-          section: cls.section,
-          studentCount: cls.student_enrollments?.[0]?.count || 0,
-        })) || [];
-
-      const formattedSubjects: Subject[] =
-        teacherSubjects?.map((subj: any) => ({
-          id: subj.id,
-          name: subj.name,
-          code: subj.code,
+          section: cls.section || "",
+          studentCount: 0, // Would be calculated from enrollments
         })) || [];
 
       setClasses(formattedClasses);
-      setSubjects(formattedSubjects);
+      setSubjects(subjectsData || []);
 
-      // Load teacher's homework assignments
-      loadHomework();
+      // Load homework assignments
+      const { data: homeworkData, error: homeworkError } = await supabase
+        .from("homework")
+        .select("*")
+        .eq("assigned_by", user.id)
+        .order("created_at", { ascending: false });
+
+      if (homeworkError) {
+        console.error("Error loading homework:", homeworkError);
+      }
+
+      setHomework(homeworkData || []);
     } catch (error) {
-      console.error("Error loading teacher data:", error);
+      console.error("Error loading data:", error);
       toast({
         title: "Error",
-        description: "Failed to load data",
+        description: "Failed to load homework data",
         variant: "destructive",
       });
     } finally {
@@ -154,68 +153,8 @@ const TeacherHomework = () => {
     }
   };
 
-  const loadHomework = async () => {
-    if (!user) return;
-
-    try {
-      // Load homework assignments created by this teacher
-      const { data: homeworkData, error } = await supabase
-        .from("homework")
-        .select(
-          `
-          id,
-          title,
-          description,
-          due_date,
-          created_at,
-          subjects(name),
-          classes(name, section),
-          student_submissions(count)
-        `,
-        )
-        .eq("teacher_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error loading homework:", error);
-        return;
-      }
-
-      const formattedHomework: Homework[] =
-        homeworkData?.map((hw: any) => {
-          // Get student count for the class
-          const classInfo = classes.find((c) => c.id === hw.class_id);
-          const submissionCount = hw.student_submissions?.[0]?.count || 0;
-
-          return {
-            id: hw.id,
-            title: hw.title,
-            description: hw.description,
-            due_date: hw.due_date,
-            subject_name: hw.subjects?.name || "Unknown Subject",
-            class_name: hw.classes?.name || "Unknown Class",
-            class_section: hw.classes?.section || "",
-            submissionCount,
-            totalStudents: classInfo?.studentCount || 0,
-            created_at: hw.created_at,
-          };
-        }) || [];
-
-      setHomework(formattedHomework);
-    } catch (error) {
-      console.error("Error loading homework:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load homework assignments",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCreateHomework = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.title || !formData.classId || !formData.subjectId) {
+  const createHomework = async () => {
+    if (!newHomework.title || !newHomework.classId || !user?.id) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields",
@@ -227,50 +166,16 @@ const TeacherHomework = () => {
     try {
       setCreating(true);
 
-      // Create homework in database
-      const { data: newHomeworkData, error } = await supabase
-        .from("homework")
-        .insert({
-          title: formData.title,
-          description: formData.description,
-          due_date: formData.dueDate || null,
-          teacher_id: user?.id,
-          class_id: formData.classId,
-          subject_id: formData.subjectId,
-        })
-        .select(
-          `
-          id,
-          title,
-          description,
-          due_date,
-          created_at,
-          subjects(name),
-          classes(name, section)
-        `,
-        )
-        .single();
+      const { error } = await supabase.from("homework").insert({
+        title: newHomework.title,
+        description: newHomework.description || null,
+        due_date: newHomework.dueDate || null,
+        class_id: newHomework.classId,
+        subject_id: newHomework.subjectId || null,
+        assigned_by: user.id,
+      });
 
-      if (error) {
-        throw error;
-      }
-
-      const selectedClass = classes.find((c) => c.id === formData.classId);
-
-      const newHomework: Homework = {
-        id: newHomeworkData.id,
-        title: newHomeworkData.title,
-        description: newHomeworkData.description,
-        due_date: newHomeworkData.due_date,
-        subject_name: newHomeworkData.subjects?.name || "",
-        class_name: newHomeworkData.classes?.name || "",
-        class_section: newHomeworkData.classes?.section || "",
-        submissionCount: 0,
-        totalStudents: selectedClass?.studentCount || 0,
-        created_at: newHomeworkData.created_at,
-      };
-
-      setHomework((prev) => [newHomework, ...prev]);
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -278,13 +183,15 @@ const TeacherHomework = () => {
       });
 
       // Reset form
-      setFormData({
+      setNewHomework({
         title: "",
         description: "",
+        dueDate: "",
         classId: "",
         subjectId: "",
-        dueDate: "",
       });
+
+      await loadData();
     } catch (error) {
       console.error("Error creating homework:", error);
       toast({
@@ -297,65 +204,45 @@ const TeacherHomework = () => {
     }
   };
 
-  const deleteHomework = async (homeworkId: string) => {
-    if (!confirm("Are you sure you want to delete this homework assignment?")) {
-      return;
-    }
-
+  const loadSubmissions = async (homeworkId: string) => {
     try {
-      // Delete homework from database
-      const { error } = await supabase
-        .from("homework")
-        .delete()
-        .eq("id", homeworkId)
-        .eq("teacher_id", user?.id); // Security: ensure teacher can only delete their own homework
+      const { data, error } = await supabase
+        .from("student_submissions")
+        .select("*")
+        .eq("homework_id", homeworkId)
+        .order("submitted_at", { ascending: false });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      setHomework((prev) => prev.filter((hw) => hw.id !== homeworkId));
-
-      toast({
-        title: "Success",
-        description: "Homework assignment deleted successfully",
-      });
+      setSubmissions(data || []);
     } catch (error) {
-      console.error("Error deleting homework:", error);
+      console.error("Error loading submissions:", error);
       toast({
         title: "Error",
-        description: "Failed to delete homework assignment",
+        description: "Failed to load submissions",
         variant: "destructive",
       });
     }
   };
 
-  const getStatusBadge = (homework: Homework) => {
-    if (!homework.due_date) {
-      return <Badge variant="outline">No Due Date</Badge>;
-    }
+  const getHomeworkStats = () => {
+    const total = homework.length;
+    const dueToday = homework.filter((hw) => {
+      if (!hw.due_date) return false;
+      const today = new Date().toISOString().split("T")[0];
+      return hw.due_date === today;
+    }).length;
+    
+    const overdue = homework.filter((hw) => {
+      if (!hw.due_date) return false;
+      const today = new Date().toISOString().split("T")[0];
+      return hw.due_date < today;
+    }).length;
 
-    const dueDate = new Date(homework.due_date);
-    const now = new Date();
-
-    if (isBefore(dueDate, now)) {
-      return <Badge variant="destructive">Overdue</Badge>;
-    } else if (isAfter(dueDate, now)) {
-      const daysLeft = Math.ceil(
-        (dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
-      );
-      if (daysLeft <= 1) {
-        return (
-          <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-            Due Soon
-          </Badge>
-        );
-      }
-      return <Badge variant="default">Active</Badge>;
-    }
-
-    return <Badge variant="outline">Active</Badge>;
+    return { total, dueToday, overdue };
   };
+
+  const stats = getHomeworkStats();
 
   if (loading) {
     return (
@@ -374,252 +261,120 @@ const TeacherHomework = () => {
             Create and manage homework assignments for your classes
           </p>
         </div>
-      </div>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Assignment
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create New Homework Assignment</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Assignment Title</Label>
+                <Input
+                  id="title"
+                  placeholder="Enter assignment title"
+                  value={newHomework.title}
+                  onChange={(e) =>
+                    setNewHomework({ ...newHomework, title: e.target.value })
+                  }
+                />
+              </div>
 
-      <Tabs defaultValue="create" className="w-full">
-        <TabsList>
-          <TabsTrigger value="create">Create Assignment</TabsTrigger>
-          <TabsTrigger value="manage">Manage Assignments</TabsTrigger>
-          <TabsTrigger value="submissions">Review Submissions</TabsTrigger>
-        </TabsList>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Enter assignment description and instructions"
+                  value={newHomework.description}
+                  onChange={(e) =>
+                    setNewHomework({ ...newHomework, description: e.target.value })
+                  }
+                  rows={4}
+                />
+              </div>
 
-        <TabsContent value="create" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Plus className="h-5 w-5" />
-                <span>Create New Assignment</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreateHomework} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Assignment Title *</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) =>
-                        setFormData({ ...formData, title: e.target.value })
-                      }
-                      placeholder="Enter assignment title"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="dueDate">Due Date</Label>
-                    <Input
-                      id="dueDate"
-                      type="date"
-                      value={formData.dueDate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, dueDate: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="class">Class *</Label>
-                    <Select
-                      value={formData.classId}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, classId: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select class" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {classes.map((cls) => (
-                          <SelectItem key={cls.id} value={cls.id}>
-                            {cls.name} {cls.section} ({cls.studentCount}{" "}
-                            students)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="subject">Subject *</Label>
-                    <Select
-                      value={formData.subjectId}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, subjectId: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select subject" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {subjects.map((subject) => (
-                          <SelectItem key={subject.id} value={subject.id}>
-                            {subject.name} ({subject.code})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="class">Class</Label>
+                  <Select
+                    value={newHomework.classId}
+                    onValueChange={(value) =>
+                      setNewHomework({ ...newHomework, classId: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select class" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classes.map((cls) => (
+                        <SelectItem key={cls.id} value={cls.id}>
+                          {cls.name} {cls.section}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
+                  <Label htmlFor="subject">Subject (Optional)</Label>
+                  <Select
+                    value={newHomework.subjectId}
+                    onValueChange={(value) =>
+                      setNewHomework({ ...newHomework, subjectId: value })
                     }
-                    placeholder="Enter assignment description, instructions, and requirements..."
-                    rows={4}
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subjects.map((subject) => (
+                        <SelectItem key={subject.id} value={subject.id}>
+                          {subject.name} ({subject.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-
-                <Button
-                  type="submit"
-                  disabled={creating}
-                  className="w-full md:w-auto"
-                >
-                  {creating ? "Creating..." : "Create Assignment"}
-                  <Plus className="h-4 w-4 ml-2" />
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="manage" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <FileText className="h-5 w-5" />
-                <span>My Assignments</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {homework.length > 0 ? (
-                <div className="space-y-4">
-                  {homework.map((hw) => (
-                    <Card key={hw.id} className="border-l-4 border-l-blue-500">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="text-lg font-semibold">
-                                {hw.title}
-                              </h3>
-                              {getStatusBadge(hw)}
-                            </div>
-
-                            <p className="text-sm text-muted-foreground mb-3">
-                              {hw.description || "No description provided"}
-                            </p>
-
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                              <div className="flex items-center space-x-2">
-                                <Users className="h-4 w-4 text-blue-500" />
-                                <span>
-                                  {hw.class_name} {hw.class_section}
-                                </span>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <FileText className="h-4 w-4 text-green-500" />
-                                <span>{hw.subject_name}</span>
-                              </div>
-                              {hw.due_date && (
-                                <div className="flex items-center space-x-2">
-                                  <Calendar className="h-4 w-4 text-orange-500" />
-                                  <span>
-                                    {format(
-                                      new Date(hw.due_date),
-                                      "MMM dd, yyyy",
-                                    )}
-                                  </span>
-                                </div>
-                              )}
-                              <div className="flex items-center space-x-2">
-                                <CheckCircle2 className="h-4 w-4 text-purple-500" />
-                                <span>{hw.submissionCount} submissions</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex space-x-2">
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4 mr-2" />
-                              View
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => deleteHomework(hw.id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">
-                    No Assignments Created
-                  </h3>
-                  <p className="text-muted-foreground">
-                    You haven't created any homework assignments yet. Create
-                    your first assignment to get started.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="submissions" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <CheckCircle2 className="h-5 w-5" />
-                <span>Student Submissions</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Submission Review</h3>
-                <p className="text-muted-foreground">
-                  Review and grade student submissions for your assignments.
-                </p>
-                <Button className="mt-4">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Submissions
-                </Button>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
 
-      {/* Quick Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
+              <div className="space-y-2">
+                <Label htmlFor="dueDate">Due Date (Optional)</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={newHomework.dueDate}
+                  onChange={(e) =>
+                    setNewHomework({ ...newHomework, dueDate: e.target.value })
+                  }
+                />
+              </div>
+
+              <Button
+                onClick={createHomework}
+                disabled={creating}
+                className="w-full"
+              >
+                {creating ? "Creating..." : "Create Assignment"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Stats */}
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <FileText className="h-5 w-5 text-blue-500" />
+              <BookOpen className="h-5 w-5 text-blue-500" />
               <div>
-                <p className="text-sm text-muted-foreground">
-                  Total Assignments
-                </p>
-                <p className="text-2xl font-bold">{homework.length}</p>
+                <p className="text-sm text-muted-foreground">Total Assignments</p>
+                <p className="text-2xl font-bold">{stats.total}</p>
               </div>
             </div>
           </CardContent>
@@ -630,21 +385,8 @@ const TeacherHomework = () => {
             <div className="flex items-center space-x-2">
               <Clock className="h-5 w-5 text-orange-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Due Soon</p>
-                <p className="text-2xl font-bold">
-                  {
-                    homework.filter((hw) => {
-                      if (!hw.due_date) return false;
-                      const dueDate = new Date(hw.due_date);
-                      const now = new Date();
-                      const daysLeft = Math.ceil(
-                        (dueDate.getTime() - now.getTime()) /
-                          (1000 * 60 * 60 * 24),
-                      );
-                      return daysLeft <= 3 && daysLeft > 0;
-                    }).length
-                  }
-                </p>
+                <p className="text-sm text-muted-foreground">Due Today</p>
+                <p className="text-2xl font-bold">{stats.dueToday}</p>
               </div>
             </div>
           </CardContent>
@@ -656,35 +398,90 @@ const TeacherHomework = () => {
               <AlertCircle className="h-5 w-5 text-red-500" />
               <div>
                 <p className="text-sm text-muted-foreground">Overdue</p>
-                <p className="text-2xl font-bold">
-                  {
-                    homework.filter((hw) => {
-                      if (!hw.due_date) return false;
-                      return isBefore(new Date(hw.due_date), new Date());
-                    }).length
-                  }
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Total Submissions
-                </p>
-                <p className="text-2xl font-bold">
-                  {homework.reduce((sum, hw) => sum + hw.submissionCount, 0)}
-                </p>
+                <p className="text-2xl font-bold">{stats.overdue}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Homework List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Assignments ({homework.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {homework.map((hw) => (
+              <div
+                key={hw.id}
+                className="flex items-center justify-between p-4 border rounded-lg"
+              >
+                <div className="flex-1">
+                  <h3 className="font-semibold">{hw.title}</h3>
+                  {hw.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {hw.description}
+                    </p>
+                  )}
+                  <div className="flex items-center space-x-4 mt-2 text-sm text-muted-foreground">
+                    <span>
+                      Created: {format(new Date(hw.created_at), "MMM dd, yyyy")}
+                    </span>
+                    {hw.due_date && (
+                      <span>
+                        Due: {format(new Date(hw.due_date), "MMM dd, yyyy")}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {hw.due_date && (
+                    <Badge
+                      variant={
+                        new Date(hw.due_date) < new Date()
+                          ? "destructive"
+                          : new Date(hw.due_date).toDateString() ===
+                              new Date().toDateString()
+                            ? "secondary"
+                            : "outline"
+                      }
+                    >
+                      {new Date(hw.due_date) < new Date()
+                        ? "Overdue"
+                        : new Date(hw.due_date).toDateString() ===
+                            new Date().toDateString()
+                          ? "Due Today"
+                          : "Active"}
+                    </Badge>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedHomework(hw);
+                      loadSubmissions(hw.id);
+                    }}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    View Submissions
+                  </Button>
+                </div>
+              </div>
+            ))}
+
+            {homework.length === 0 && (
+              <div className="text-center py-8">
+                <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No homework assignments yet</p>
+                <p className="text-sm text-muted-foreground">
+                  Create your first assignment to get started
+                </p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
