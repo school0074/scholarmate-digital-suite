@@ -166,7 +166,7 @@ const AdminClasses = () => {
         {
           ...formData,
           capacity: parseInt(formData.capacity) || 30,
-          teacher_id: formData.teacher_id || null,
+          teacher_id: formData.teacher_id === "none" ? null : formData.teacher_id || null,
         },
       ]);
 
@@ -394,7 +394,7 @@ const AdminClasses = () => {
                     <SelectValue placeholder="Select teacher (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No teacher assigned</SelectItem>
+                    <SelectItem value="none">No teacher assigned</SelectItem>
                     {teachers.map((teacher) => (
                       <SelectItem key={teacher.id} value={teacher.id}>
                         {teacher.full_name}
