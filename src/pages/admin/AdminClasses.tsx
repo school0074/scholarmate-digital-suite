@@ -104,13 +104,8 @@ const AdminClasses = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("classes")
-        .select(
-          `
-          *,
-          teacher:profiles(full_name)
-        `,
-        )
-        .order("grade", { ascending: true });
+        .select("*")
+        .order("grade_level", { ascending: true });
 
       if (error) throw error;
 

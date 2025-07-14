@@ -183,7 +183,7 @@ const AdminDashboard = () => {
       // Recent payments
       const { data: recentPayments } = await supabase
         .from("fees")
-        .select("*, profiles(full_name)")
+        .select("*")
         .eq("paid", true)
         .order("payment_date", { ascending: false })
         .limit(2);
@@ -207,7 +207,7 @@ const AdminDashboard = () => {
       if (pendingMaterials && pendingMaterials.length > 0) {
         const latestPending = await supabase
           .from("study_materials")
-          .select("title, created_at, profiles(full_name)")
+          .select("title, created_at")
           .eq("approved", false)
           .order("created_at", { ascending: false })
           .limit(1)
