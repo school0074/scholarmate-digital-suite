@@ -101,7 +101,7 @@ const Announcements = () => {
           expires_at,
           created_at,
           updated_at,
-          profiles!author_id(full_name),
+          author_id,
           classes(name, section)
         `,
         )
@@ -122,7 +122,7 @@ const Announcements = () => {
           title: ann.title,
           content: ann.content,
           author_id: ann.author_id || "",
-          author_name: (ann.profiles as any)?.full_name || "Unknown",
+          author_name: "Admin",
           target_role: ann.target_role,
           class_id: ann.class_id,
           class_name: ann.classes

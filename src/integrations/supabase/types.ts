@@ -320,6 +320,7 @@ export type Database = {
           name: string
           school_id: string | null
           section: string | null
+          teacher_id: string | null
           updated_at: string
         }
         Insert: {
@@ -331,6 +332,7 @@ export type Database = {
           name: string
           school_id?: string | null
           section?: string | null
+          teacher_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -342,6 +344,7 @@ export type Database = {
           name?: string
           school_id?: string | null
           section?: string | null
+          teacher_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -350,6 +353,20 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classes_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classes_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "student_profiles"
             referencedColumns: ["id"]
           },
         ]

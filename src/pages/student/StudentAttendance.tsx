@@ -83,7 +83,7 @@ const StudentAttendance = () => {
           date,
           status,
           notes,
-          profiles!attendance_teacher_id_fkey(full_name)
+          marked_by
         `,
         )
         .eq("student_id", user.id)
@@ -102,7 +102,7 @@ const StudentAttendance = () => {
           date: record.date,
           status: record.status,
           notes: record.notes,
-          marked_by: record.profiles?.full_name || "Teacher",
+          marked_by: "Teacher",
         })) || [];
 
       setAttendanceRecords(formattedRecords);

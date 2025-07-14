@@ -99,8 +99,8 @@ const Messages = () => {
           read_at,
           reply_to,
           created_at,
-          sender:profiles!sender_id(full_name),
-          recipient:profiles!recipient_id(full_name)
+          sender_id,
+          recipient_id
         `,
         )
         .order("created_at", { ascending: false });
@@ -131,8 +131,8 @@ const Messages = () => {
           read_at: msg.read_at,
           reply_to: msg.reply_to,
           created_at: msg.created_at,
-          sender_name: (msg.sender as any)?.full_name || "Unknown",
-          recipient_name: (msg.recipient as any)?.full_name || "Unknown",
+          sender_name: "User",
+          recipient_name: "User",
         })) || [];
 
       setMessages(messagesData);

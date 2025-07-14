@@ -113,9 +113,7 @@ const StudentGrades = () => {
           date,
           class_id,
           teacher_id,
-          profiles!exams_teacher_id_fkey (
-            full_name
-          )
+          teacher_id
         `,
         )
         .eq("class_id", enrollment.class_id)

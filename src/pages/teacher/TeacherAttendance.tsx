@@ -116,7 +116,7 @@ const TeacherAttendance = () => {
         .select(`
           student_id,
           roll_number,
-          profiles!inner(*)
+          profiles!student_enrollments_student_id_fkey(full_name, email)
         `)
         .eq("class_id", selectedClass)
         .eq("status", "active");

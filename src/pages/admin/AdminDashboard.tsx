@@ -194,7 +194,7 @@ const AdminDashboard = () => {
             id: "payment-" + payment.id,
             type: "payment",
             title: "Fee Payment Received",
-            description: `${(payment as any).profiles?.full_name || "A student"} paid ₹${payment.paid_amount}`,
+            description: `Student paid ₹${payment.paid_amount || payment.amount}`,
             time: payment.payment_date
               ? formatRelativeTime(payment.payment_date)
               : "Recently",
