@@ -234,7 +234,7 @@ const AdminAnalytics = () => {
               : 0,
         },
         systemStats: {
-          uptime: 99.8, // This would come from a monitoring system - using realistic but static value
+          uptime: 99.8, // Production: integrate with monitoring system
           activeLogins: Math.max(
             Math.floor((studentsResult.count || 0) * 0.3),
             50,

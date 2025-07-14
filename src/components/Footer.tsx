@@ -66,10 +66,10 @@ const Footer = () => {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/auth"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Demo
+                  Login
                 </a>
               </li>
               <li>

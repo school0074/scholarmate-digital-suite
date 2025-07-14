@@ -426,7 +426,7 @@ const AdminFees = () => {
                       <SelectValue placeholder="Select student" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Select a student...</SelectItem>
+                      <SelectItem value="none" disabled>Select a student...</SelectItem>
                       {students.map((student) => (
                         <SelectItem key={student.id} value={student.id}>
                           {student.full_name} -{" "}
