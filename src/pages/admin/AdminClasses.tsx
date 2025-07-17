@@ -158,7 +158,9 @@ const AdminClasses = () => {
     try {
       const { error } = await supabase.from("classes").insert([
         {
-          ...formData,
+          name: formData.name,
+          grade_level: parseInt(formData.grade) || null,
+          section: formData.section,
           capacity: parseInt(formData.capacity) || 30,
           teacher_id: formData.teacher_id === "none" ? null : formData.teacher_id || null,
         },
