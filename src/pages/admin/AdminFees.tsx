@@ -123,7 +123,7 @@ const AdminFees = () => {
         .select(
           `
           *,
-          student:profiles!fees_student_id_fkey(full_name, email)
+          student:profiles(full_name, email)
         `,
         )
         .order("created_at", { ascending: false });
@@ -197,7 +197,7 @@ const AdminFees = () => {
           id,
           full_name,
           email,
-          student_enrollments!student_enrollments_student_id_fkey (
+          student_enrollments (
             classes (
               name,
               grade_level,
