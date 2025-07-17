@@ -91,7 +91,6 @@ const AdminClasses = () => {
     capacity: "",
     teacher_id: "",
     schedule: "",
-    description: "",
   });
 
   useEffect(() => {
@@ -178,7 +177,6 @@ const AdminClasses = () => {
         capacity: "",
         teacher_id: "",
         schedule: "",
-        description: "",
       });
 
       toast({
@@ -408,19 +406,6 @@ const AdminClasses = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, schedule: e.target.value })
                   }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Enter class description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  rows={3}
                 />
               </div>
 
