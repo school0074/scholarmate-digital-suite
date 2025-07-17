@@ -123,7 +123,9 @@ const AdminFees = () => {
         .select(
           `
           *,
-          student:profiles(full_name, email)
+          student:users!fees_student_id_fkey(
+            profiles(full_name, email)
+          )
         `,
         )
         .order("created_at", { ascending: false });
@@ -131,7 +133,8 @@ const AdminFees = () => {
       if (error) throw error;
       const feesData = data?.map((fee: any) => ({
         ...fee,
-        student_name: (fee.student as any)?.full_name || "Unknown Student"
+        student_name: fee.student?.profiles?.full_name || "Unknown Student",
+        student: fee.student?.profiles
       })) || [];
       setFees(feesData);
     } catch (error) {
@@ -191,13 +194,16 @@ const AdminFees = () => {
   const loadStudents = async () => {
     try {
       const { data, error } = await supabase
-        .from("profiles")
+        .from("users")
         .select(
           `
-          id,
-          full_name,
-          email,
-          student_enrollments (
+          profiles!inner(
+            id,
+            full_name,
+            email,
+            role
+          ),
+          student_enrollments!student_enrollments_student_id_fkey (
             classes (
               name,
               grade_level,
@@ -206,10 +212,16 @@ const AdminFees = () => {
           )
         `,
         )
-        .eq("role", "student");
+        .eq("profiles.role", "student");
 
       if (error) throw error;
-      setStudents(data || []);
+      const studentsData = data?.map((user: any) => ({
+        id: user.profiles.id,
+        full_name: user.profiles.full_name,
+        email: user.profiles.email,
+        student_enrollments: user.student_enrollments
+      })) || [];
+      setStudents(studentsData);
     } catch (error) {
       console.error("Error loading students:", error);
     }
